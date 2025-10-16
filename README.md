@@ -4,7 +4,7 @@ Thi Hoang | 14.10.2025
 
 ## Project goal:
 
-To carry out a mini project and datapipeline using APIs, web scraping, Docker, Git, databases and data visualisation tool (Power BI).
+To carry out a mini project and datapipeline using `APIs`, `web scraping`, `Docker`, `Git`, databases (`PostgreSQL`, `pgAdmin4`) and data visualisation tool (`Power BI`).
 
 ***Topic***: still brainstorming.
 
