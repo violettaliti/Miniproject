@@ -32,3 +32,31 @@ To carry out a mini project and datapipeline using `APIs`, `web scraping`, `Dock
 - APIs:
 
 - Websites:
+
+## Project structure:
+```bash
+miniproject/
+├─ README.md
+├─ .gitignore
+├─ requirements.txt
+├─ .env                     # to store API_KEYs
+├─ docker-compose.yml
+├─ Dockerfile
+├─ src/
+│  ├─ __init__.py
+│  ├─ api_logger.py         # APIs (requests)
+│  ├─ web_logger.py         # web scraper (requests + BeautifulSoup)
+│  ├─ transform.py          
+│  ├─ save_data.py          # DB DDL + inserts/UPSERTs
+│  └─ tests/                # unittests
+│     ├─ test_api_logger.py
+│     ├─ test_web_logger.py
+│     ├─ test_transform.py
+│     └─ test_save_data.py
+├─ db/
+│  ├─ schema.sql            # 3NF DDL
+│  └─ views.sql             # Power BI SELECTs / views
+└─ data/
+   ├─ exports/              # CSVs for Power BI
+   └─ cache/ 
+```
