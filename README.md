@@ -11,12 +11,12 @@ To carry out a mini project and datapipeline using `APIs`, `web scraping`, `Dock
 ## Project flow
 
 - [ ] Choose a topic /•᷅‎‎•᷄\੭ ❯❯❯❯ choose relevant APIs
+- [ ] Dockerise the process ❯❯❯❯ `Dockerfile` + `Dockerimage` + `Dockercompose`
+  - [ ] Docker prototype
 - [ ] Retrieve data from `APIs` ❯❯❯❯ redefine my project goals based on the available and potential data retrieved
   - [ ] API prototype
 - [ ] Scrape complementary data from `websites` ❯❯❯❯ see the list below
   - [ ] Web scraper prototype
-- [ ] Dockerise the process ❯❯❯❯ `Dockerfile` + `Dockerimage` + `Dockercompose`
-  - [ ] Docker prototype
 - [ ] Store the acquired data in `PostgreSQL` ❯❯❯❯ `pgAdmin4` 
   - [ ] Database prototype
 - [ ] Clean, transform and export data for visualisation ❯❯❯❯ `Power BI` 
