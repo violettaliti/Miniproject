@@ -1,0 +1,10 @@
+
+services:
+  python_loader:
+    build: .
+    command: python /app/api_logger.py
+    volumes:
+      - ./src/:/
+
+  # postgres:
+  #   image:
