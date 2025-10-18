@@ -1,4 +1,4 @@
-Thi Hoang | 14.10.2025
+Thi Hoang | 10-11/2025
 
 # Thi's Miniproject ₍^. .^₎⟆
 
@@ -27,12 +27,6 @@ To carry out a mini project and datapipeline using `APIs`, `web scraping`, `Dock
   - [ ] AI models prototype
 - [ ] Wrap up the project ^. .^₎ฅ
 
-## Project details:
-
-- APIs:
-
-- Websites:
-
 ## Project structure:
 ```bash
 miniproject/
@@ -57,3 +51,12 @@ miniproject/
    └─ init/
      └─ schema.sql # DDL in 3Nf
 ```
+
+## Project details:
+
+- APIs:
+  - :)
+  - 
+- Websites:
+  - :)
+  - 
