@@ -78,14 +78,14 @@ miniproject/
       - predict GDP growth, unemployment rate, investment rate, inflation etc.
       - predict one indicator using the others (e.g. CO2 emissions from GDP and population).
   - Unsupervised learning:
-    - KMeans for grouping.
+    - KMeans clustering.
       - group countries by political, socio-economic similarities / differences.
 
 ## Project details
 
 - APIs:
   - World Bank indicators API (v2). Example endpoints: 
-    - https://api.worldbank.org/v2/country?format=json&per_page=300 
+    - Country list: https://api.worldbank.org/v2/country?format=json&per_page=300 
     - https://api.worldbank.org/v2/country/all/indicator/SP.POP.TOTL
 - Websites:
   - :)

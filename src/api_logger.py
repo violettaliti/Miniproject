@@ -1,4 +1,6 @@
+import requests
 
+def get_country_metadata()
 
 if __name__ == "__main__":
-    print("hello world")
+    pass
