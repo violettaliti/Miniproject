@@ -15,8 +15,5 @@ COPY requirements.txt /app/requirements.txt
 RUN pip install --upgrade pip
 RUN pip install -r /app/requirements.txt
 
-COPY . /app
-
 # default cmd
-CMD ["python", "-u", "src/main.py"]
-# -u runs Python in unbuffered mode
+# CMD ["python", "main.py"]

@@ -1,5 +1,6 @@
-
+import os
 
 
 if __name__ == "__main__":
-    pass
+    print("hello from web_logger")
+    print(os.getenv("DB_HOST"))

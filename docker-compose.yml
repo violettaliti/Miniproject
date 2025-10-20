@@ -1,14 +1,32 @@
 
 services:
   # python loader
-  app:
+  app_base:
     build: .
-    container_name: python_loader
-    command: python /app/api_logger.py
     volumes:
       - ./src/:/app
     env_file:
       - .env
+    environment:
+      DB_HOST: ${DB_HOST:-db} # ${VAR:-default}: use the var from .env if available, otherwise use this default value
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${POSTGRES_DB:-worldbank}
+      DB_USER: ${POSTGRES_USER:-user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-katzi}
+      # replace this var with country of interest
+      # COUNTRY_OF_INTEREST: DE
+    networks:
+      - miniproject_network
+
+  app_api_logger: # benefit compared to putting both api_logger and web_logger in one service: parallel processing
+    extends: # inherit from the app_base service
+      service: app_base
+    command: python /app/api_logger.py
+
+  app_web_logger:
+    extends:
+      service: app_base
+    command: python /app/web_logger.py
 
   # postgres database for exporting / storing the postgres_data
   db:
@@ -25,5 +43,10 @@ services:
     volumes:
       - ./postgres_data/db:/var/lib/postgresql/data # bind mount for persistent db
       - ./postgres_data/init:/docker-entrypoint-initdb.d # bind mount for init.sql
-      - ./postgres_data/data:/data # bind mount for CSVs
+    networks:
+      - miniproject_network
+
+networks:
+  miniproject_network: # so that I don't have to go through the host for the services' connection anymore
+    driver: bridge
 
