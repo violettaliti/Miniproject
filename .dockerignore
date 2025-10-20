@@ -1,0 +1,19 @@
+# git version control
+.git
+.gitignore
+
+# Python cache
+**/__pycache__/
+
+# environment and system files
+.env
+*.log
+.DS_Store
+
+# IDE/project files
+.vscode/
+.idea/
+
+# large local DB files (don’t send to Docker daemon)
+postgres_data/db/
+postgres_data/data/

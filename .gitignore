@@ -2,4 +2,12 @@
 .DS_Store
 .env
 **/__pycache__/ # ** means anywhere
+
+# experiement scripts
 /experiments
+
+# postgreSQL runtime data / live db files
+/postgres_data/db/
+
+# CSVs extracted from APIs & webscraping
+/postgres_data/data/

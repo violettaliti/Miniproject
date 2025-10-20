@@ -18,5 +18,5 @@ RUN pip install -r /app/requirements.txt
 COPY . /app
 
 # default cmd
-CMD ["python", "-u", "main.py"]
+CMD ["python", "-u", "src/main.py"]
 # -u runs Python in unbuffered mode

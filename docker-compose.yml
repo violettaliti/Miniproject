@@ -1,10 +1,29 @@
 
 services:
-  python_loader:
+  # python loader
+  app:
     build: .
+    container_name: python_loader
     command: python /app/api_logger.py
     volumes:
-      - ./src/:/
+      - ./src/:/app
+    env_file:
+      - .env
 
-  # postgres:
-  #   image:
+  # postgres database for exporting / storing the postgres_data
+  db:
+    image: postgres:16
+    container_name: postgres_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-worldbank} # ${VAR:-default}: use the var from .env if available, otherwise use this default value
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-katzi}
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data/db:/var/lib/postgresql/data # bind mount for persistent db
+      - ./postgres_data/init:/docker-entrypoint-initdb.d # bind mount for init.sql
+      - ./postgres_data/data:/data # bind mount for CSVs
+
