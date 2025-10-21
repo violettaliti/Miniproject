@@ -46,12 +46,12 @@ miniproject/
 │  ├─ __init__.py
 │  ├─ api_logger.py # APIs (requests)
 │  ├─ web_logger.py # web scraper (requests + BeautifulSoup)
-│  ├─ exporter.py # export to sql
+│  ├─ save_data.py # export to sql
 │  └─ tests/ # unittests
 │     ├─ __init__.py
 │     ├─ test_api_logger.py
 │     ├─ test_web_logger.py
-│     └─ test_exporter.py
+│     └─ test_save_data.py
 └─ postgres_data/
    ├─ db/ # actual database files (postgres storage)
    ├─ data/ # for storing CSVs if needed
