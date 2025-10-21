@@ -1,4 +1,4 @@
-import requests
+import requests, save_data
 
 # Full list of World Bank ISO2 codes for countries in Europe
 
@@ -49,10 +49,11 @@ def get_European_country_general_info():
             print("\n ---- Finish collecting data! ᓚ₍⑅^..^₎♡ ----\n")
 
         else:
-                print(f"Something went wrong, I couldn't fetch the requested data /ᐠ - ˕ -マ. Error status code: {response.status_code}.")
+                print(f"Something went wrong, I couldn't fetch the requested data /ᐠ-˕-マ. Error status code: {response.status_code}.")
 
     except requests.exceptions.RequestException as e:
         print(f"Something went wrong ૮₍•᷄  ༝ •᷅₎ა --> Error message: {type(e)} - {e}.")
 
 if __name__ == "__main__":
     get_European_country_general_info()
+    save_data()

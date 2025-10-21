@@ -21,11 +21,13 @@ services:
   app_api_logger: # benefit compared to putting both api_logger and web_logger in one service: parallel processing
     extends: # inherit from the app_base service
       service: app_base
+    container_name: api_logger
     command: python /app/api_logger.py
 
   app_web_logger:
     extends:
       service: app_base
+    container_name: web_logger
     command: python /app/web_logger.py
 
   # postgres database for exporting / storing the postgres_data
