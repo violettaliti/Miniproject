@@ -2,3 +2,4 @@ requests==2.32.5
 beautifulsoup4==4.14.2
 psycopg2==2.9.11
 pandas==2.3.3
+python-dotenv==1.1.1

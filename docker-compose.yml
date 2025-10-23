@@ -8,7 +8,7 @@ services:
     env_file:
       - .env
     environment:
-      DB_HOST: ${DB_HOST:-db} # ${VAR:-default}: use the var from .env if available, otherwise use this default value
+      DB_HOST: ${DB_HOST:-db} # ${VAR:-default}: use the var from .env if available, otherwise use this default value. Use 'db' inside docker container, 'localhost' outside (e.g. in locally installed apps such as pgAdmin)
       DB_PORT: ${DB_PORT:-5432}
       DB_NAME: ${POSTGRES_DB:-worldbank}
       DB_USER: ${POSTGRES_USER:-user}
@@ -23,6 +23,9 @@ services:
       service: app_base
     container_name: api_logger
     command: python /app/api_logger.py
+    depends_on:
+      db:
+        condition: service_healthy
 
   app_web_logger:
     extends:
@@ -41,12 +44,17 @@ services:
     env_file:
       - .env
     ports:
-      - "5444:5432"
+      - "5555:5432"
     volumes:
       - ./postgres_data/db:/var/lib/postgresql/data # bind mount for persistent db
       - ./postgres_data/init:/docker-entrypoint-initdb.d # bind mount for init.sql
     networks:
       - miniproject_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-worldbank}"]
+      interval: 4s
+      timeout: 4s
+      retries: 15
 
 networks:
   miniproject_network: # so that I don't have to go through the host for the services' connection anymore
