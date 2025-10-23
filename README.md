@@ -18,12 +18,27 @@ To carry out a mini project and datapipeline using `APIs`, `web scraping`, `Dock
 - [X] Choose an API and its relevant topics /•᷅‎‎•᷄\੭ 
 - [X] Dockerise the process ❯❯ `Dockerfile` + `Dockerimage` + `Dockercompose`
   - [X] Docker prototype
+  - [ ] Improve docker compose as needed
 - [X] Retrieve data from `APIs` ❯❯ redefine my project goals based on the available and potential data retrieved
   - [X] API prototype
+  - [ ] Extend API requests - 1
+  - [ ] Extend API requests - 2
+  - [ ] Extend API requests - 3
 - [ ] Scrape complementary data from `websites` ❯❯ see the list below
   - [ ] Web scraper prototype
+  - [ ] Extend data sources for web scraping - 1
+  - [ ] Extend data sources for web scraping - 2
+  - [ ] Extend data sources for web scraping - 3
 - [ ] Store the acquired data in `PostgreSQL` ❯❯ `pgAdmin4` 
   - [ ] Database prototype
+  - [ ] Initial relational database schema
+  - [ ] Extend / update relational database schema
+  - [ ] Extend database with the additional data acquired from extended API requests and web-scraping - 1
+  - [ ] Extend database with the additional data acquired from extended API requests and web-scraping - 2
+  - [ ] Initial advanced relational database schema (star / galaxy schemas)
+  - [ ] Extend database with the additional data acquired from extended API requests and web-scraping - 3
+- [ ] Unittests for save_data.py
+  - [ ] Optional: unittests for api_logger.py and web_logger.py
 - [ ] Clean, transform and export data for visualisation ❯❯ `Power BI` 
 - [ ] Connect `Power BI` to `PostgreSQL` database container
 - [ ] Play with visualisation 📊
@@ -49,7 +64,7 @@ miniproject/
 │  ├─ save_data.py # export to sql
 │  └─ tests/ # unittests
 │     ├─ __init__.py
-│     ├─ test_api_logger.py
+│     ├─ test_api_logger.py 
 │     ├─ test_web_logger.py
 │     └─ test_save_data.py
 └─ postgres_data/

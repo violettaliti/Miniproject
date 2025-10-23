@@ -1,4 +1,4 @@
-import requests, save_data
+import requests
 
 # Full list of World Bank ISO2 codes for countries in Europe
 
@@ -56,4 +56,3 @@ def get_European_country_general_info():
 
 if __name__ == "__main__":
     get_European_country_general_info()
-    save_data()
