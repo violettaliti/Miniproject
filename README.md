@@ -16,10 +16,10 @@ To carry out a mini project and datapipeline using `APIs`, `web scraping`, `Dock
 ## Project flow
 
 - [X] Choose an API and its relevant topics /•᷅‎‎•᷄\੭ 
-- [X] Dockerise the process ❯❯ `Dockerfile` + `Dockerimage` + `Dockercompose`
+- [ ] Dockerise the process ❯❯ `Dockerfile` + `Dockerimage` + `Dockercompose`
   - [X] Docker prototype
   - [ ] Improve docker compose as needed
-- [X] Retrieve data from `APIs` ❯❯ redefine my project goals based on the available and potential data retrieved
+- [ ] Retrieve data from `APIs` ❯❯ redefine my project goals based on the available and potential data retrieved
   - [X] API prototype
   - [ ] Extend API requests - 1
   - [ ] Extend API requests - 2
@@ -30,8 +30,8 @@ To carry out a mini project and datapipeline using `APIs`, `web scraping`, `Dock
   - [ ] Extend data sources for web scraping - 2
   - [ ] Extend data sources for web scraping - 3
 - [ ] Store the acquired data in `PostgreSQL` ❯❯ `pgAdmin4` 
-  - [ ] Database prototype
-  - [ ] Initial relational database schema
+  - [X] Database prototype
+  - [X] Initial relational database schema
   - [ ] Extend / update relational database schema
   - [ ] Extend database with the additional data acquired from extended API requests and web-scraping - 1
   - [ ] Extend database with the additional data acquired from extended API requests and web-scraping - 2
