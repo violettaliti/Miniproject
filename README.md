@@ -71,7 +71,7 @@ miniproject/
    ├─ db/ # actual database files (postgres storage)
    ├─ data/ # for storing CSVs if needed
    └─ init/
-     └─ schema.sql # DDL in 3Nf
+     └─ schema.sql # DDL in 3NF
 ```
 ## Project concept
 - How is the chosen API used?
@@ -104,3 +104,13 @@ miniproject/
     - https://api.worldbank.org/v2/country/all/indicator/SP.POP.TOTL
 - Websites:
   - :)
+
+## Requirements
+- pgAdmin4 installed locally (I didn't include a service / container for pgAdmin in my docker compose)
+
+
+## How to start the project using Docker Compose
+- Step 1: open the project's folder and copy the folder's path
+- Step 2: open the host (your laptop)'s terminal, go to the project's folder using its path
+- Step 3: docker compose build
+- Step 4: docker compose up
