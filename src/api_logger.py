@@ -39,10 +39,10 @@ def get_European_country_general_info():
                 country_capital_city_all.append(country_capital_city)
 
                 country_longitude = country_dict["longitude"]
-                country_longitude_all.append(country_longitude)
+                country_longitude_all.append(float(country_longitude))
 
                 country_latitude = country_dict["latitude"]
-                country_latitude_all.append(country_latitude)
+                country_latitude_all.append(float(country_latitude))
 
             print("....Collecting data.... (•˕•マ.ᐟ \n")
             print(f"\nList of country codes:\n{country_code_all}\n")
@@ -205,9 +205,30 @@ class WorldBankDBPostgres:
             self.connection.rollback()
             raise DatabaseError(f"Something went wrong with adding the data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
 
+    def get_all_countries_info(self):
+        try:
+            self.cursor.execute("SELECT * FROM european_country_general_info ORDER BY country_code")
+            all_countries_rows = self.cursor.fetchall()
+            for row in all_countries_rows:
+                print(row)
+        except (Exception, psycopg2.DatabaseError) as e:
+            self.connection.rollback()
+            raise DatabaseError(f"Something went wrong with getting all countries' info. Error type: {type(e).__name__}, error message: '{e}'.")
 
+    def get_country_info(self, country_code):
+        try:
+            self.cursor.execute("SELECT * FROM european_country_general_info WHERE country_code ILIKE %s", (f"%{country_code}%",))
+            country_row = self.cursor.fetchall()
+            category = [row[0] for row in self.cursor.description]
+            print(f"Country info of {country_code} is: {country_row}.")
+        except (Exception, psycopg2.DatabaseError) as e:
+            raise DatabaseError(f"Something went wrong with getting the country info of '{country_code}'. Error type: {type(e).__name__}, error message: '{e}'.")
 
-
+    def close_connection(self):
+        try:
+            self.cursor.close()
+        except (Exception, psycopg2.DatabaseError) as e:
+            raise DatabaseError(f"Something went wrong with closing the connection. Error type: {type(e).__name__}, error message: '{e}'.")
 
 if __name__ == "__main__":
     api_data = get_European_country_general_info()
@@ -216,5 +237,9 @@ if __name__ == "__main__":
     wb_db._create_schema()
     wb_db._create_table()
     wb_db.add_data_to_db(api_data)
+    # wb_db.get_all_countries_info()
+    wb_db.get_country_info("AT")
+    wb_db.get_country_info("DE")
+    wb_db.close_connection()
 
 
