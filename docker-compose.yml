@@ -8,13 +8,15 @@ services:
     env_file:
       - .env
     environment:
-      DB_HOST: ${DB_HOST:-db} # ${VAR:-default}: use the var from .env if available, otherwise use this default value. Use 'db' inside docker container, 'localhost' outside (e.g. in locally installed apps such as pgAdmin)
-      DB_PORT: ${DB_PORT:-5432}
-      DB_NAME: ${POSTGRES_DB:-worldbank}
+      DB_HOST: db # use 'db' inside docker container, 'localhost' outside (e.g. in locally installed apps such as pgAdmin) - here it's for inside the container so it's hardcoded with 'db'.
+      DB_PORT: 5432 # use 5555 for locally installed apps such as pgAdmin, 5432 for inside the docker container
+      DB_NAME: ${POSTGRES_DB:-worldbank} # ${VAR:-default}: use the var from .env if available, otherwise use this default value.
       DB_USER: ${POSTGRES_USER:-user}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-katzi}
-      # replace this var with country of interest
-      # COUNTRY_OF_INTEREST: DE
+      # replace the following var with names of the european countries of interest
+      COUNTRIES_OF_INTEREST: Austria, Germany
+      # change the following var to true/yes/1 if you want all countries' general info to be displayed
+      DISPLAY_ALL_COUNTRIES_INFO: false
     networks:
       - miniproject_network
 
@@ -32,6 +34,9 @@ services:
       service: app_base
     container_name: web_logger
     command: python /app/web_logger.py
+    depends_on:
+      db:
+        condition: service_healthy
 
   # postgres database for exporting / storing the postgres_data
   db:

@@ -1,9 +1,11 @@
 import os # os is part of python standard library -> no need to add to requirements.txt
 import requests
-import psycopg2
+import psycopg
 import time # time is part of python standard library -> no need to add to requirements.txt
-from psycopg2 import sql
+from psycopg import sql
 from dotenv import load_dotenv
+from decimal import Decimal # part of python standard library
+from datetime import datetime # part of python standard library
 
 #### API requests
 # Full list of World Bank ISO2 codes for countries in Europe
@@ -45,13 +47,13 @@ def get_European_country_general_info():
                 country_latitude_all.append(float(country_latitude))
 
             print("....Collecting data.... (•˕•マ.ᐟ \n")
-            print(f"\nList of country codes:\n{country_code_all}\n")
-            print(f"\nList of country names:\n{country_name_all}\n")
-            print(f"\nList of country income levels:\n{country_income_level_all}\n")
-            print(f"\nList of country capital city:\n{country_capital_city_all}\n")
-            print(f"\nList of country longitude:\n{country_longitude_all}\n")
-            print(f"\nList of country latitude:\n{country_latitude_all}\n")
-            print("\n ---- Finish collecting data! ᓚ₍⑅^..^₎♡ ----\n")
+            print(f"List of country codes:\n{country_code_all}\n")
+            print(f"List of country names:\n{country_name_all}\n")
+            print(f"List of country income levels:\n{country_income_level_all}\n")
+            print(f"List of country capital city:\n{country_capital_city_all}\n")
+            print(f"List of country longitude:\n{country_longitude_all}\n")
+            print(f"List of country latitude:\n{country_latitude_all}\n")
+            print("---- Finish collecting data! ᓚ₍⑅^..^₎♡ ----\n")
 
             rows = list(zip( # zip() transposes a list of columns into a list of rows, suitable for INSERT query later (to add the data to db)
                 country_code_all,
@@ -78,8 +80,8 @@ class WorldBankDBPostgres:
         dbname = os.getenv("DB_NAME", os.getenv("POSTGRES_DB", "worldbank"))  # double fallbacks: if there's no env var name 'DB_NAME', then check for 'POSTGRES_DB', if still fails, use the default 'worldbank'
         user = os.getenv("DB_USER", os.getenv("POSTGRES_USER", "user"))
         password = os.getenv("DB_PASSWORD", os.getenv("POSTGRES_PASSWORD", "katzi"))  # in my .env file, I have a different pw but since it's in .gitignore, we can just use the default pw 'katzi'
-        host = os.getenv("DB_HOST", "db")  # use 'db' inside docker container, 'localhost' outside (e.g. in locally installed apps such as pgAdmin)
-        port = int(os.getenv("DB_PORT", 5555))  # use 5555 for locally installed apps such as pgAdmin, 5432 for inside the docker container
+        host = os.getenv("DB_HOST", "localhost")  # use 'db' inside docker container, 'localhost' outside (e.g. in locally installed apps such as pgAdmin)
+        port = int(os.getenv("DB_PORT", 5555))  # use 5432 for inside the docker container, 5555 for locally installed apps such as pgAdmin
 
         try:
             self.connection = self.connect_with_retry({
@@ -92,10 +94,10 @@ class WorldBankDBPostgres:
             })
             self.cursor = self.connection.cursor()
             self.connection.commit()
-            print("\n𖹭 Connected to database (schema 'thi_miniproject' is set)! 𖹭\n")
+            print("\n- Connected to database (schema 'thi_miniproject' is set)! -\n")
 
-        except (Exception, psycopg2.DatabaseError) as e:
-            self.connection = psycopg2.connect(dbname = dbname, user = user, password = password, host = host, port = port)
+        except (Exception, psycopg.DatabaseError) as e:
+            self.connection = psycopg.connect(dbname = dbname, user = user, password = password, host = host, port = port)
             raise DatabaseError(f"Something went wrong with the connection ≽^- ˕ -^≼ Error type: {type(e).__name__}, error message: '{e}'.")
 
     @staticmethod
@@ -107,60 +109,22 @@ class WorldBankDBPostgres:
         last_err = None
         for attempt in range(1, retries + 1):
             try:
-                conn = psycopg2.connect(**dsn_kwargs)
+                conn = psycopg.connect(**dsn_kwargs)
                 conn.autocommit = False
                 print(f"Connected on attempt # {attempt} ₍^. .^₎⟆")
                 return conn
-            except psycopg2.OperationalError as e:
+            except psycopg.OperationalError as e:
                 last_err = e
                 print(f"Attempt {attempt}: Postgres not ready yet. Retrying in {delay}s...")
                 time.sleep(delay)
         raise last_err
 
-    def _create_schema(self, schema_name = "thi_miniproject"):
-        try:
-            self.cursor.execute(f"CREATE SCHEMA IF NOT EXISTS {schema_name};")
-        except (Exception, psycopg2.DatabaseError) as e:
-            raise DatabaseError(f"Something went wrong with creating the schema '{schema_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
-
     def _drop_table(self, table_name):
         try:
             self.cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
             self.connection.commit()
-        except (Exception, psycopg2.DatabaseError) as e:
+        except (Exception, psycopg.DatabaseError) as e:
             raise DatabaseError(f"Something went wrong with dropping the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
-
-    # I don't really need this _create_table() method because I wrote DDL for my db separately using pgAdmin and included it in the init folder, but still just for learning purposes
-    def _create_table(self,
-                    table_name: str = "european_country_general_info",
-                    table_ddl: str | None = None
-    ):
-        if table_ddl is None:
-            table_ddl = """
-                country_code TEXT PRIMARY KEY,
-                country_name TEXT,
-                country_income_level TEXT,
-                country_capital_city TEXT,
-                country_longitude NUMERIC,
-                country_latitude NUMERIC, 
-                data_source TEXT NOT NULL DEFAULT 'WorldBank API',
-                insert_time TIMESTAMP NOT NULL DEFAULT NOW(),
-                update_count INTEGER NOT NULL DEFAULT 0,
-                last_updated TIMESTAMP NOT NULL DEFAULT NOW()
-            """
-
-        build_table = sql.SQL("CREATE TABLE IF NOT EXISTS {} ({});").format( # using sql.Identifier to prevent injection risk (e.g. caused by weird characters), thus safely quote identifiers (table names etc.)
-            sql.Identifier(table_name),
-            sql.SQL(table_ddl.strip())
-        )
-
-        try:
-            self.cursor.execute(build_table)
-            self.connection.commit()
-            print(f"The table '{table_name}' has either been created or already existed. ᓚ₍ ^. ̫ .^₎")
-        except (Exception, psycopg2.DatabaseError) as e:
-            self.connection.rollback()
-            raise DatabaseError(f"Something went wrong with creating the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
 
     def add_data_to_db(self, data: list = None, table_name: str = "european_country_general_info"):
         if not data:
@@ -178,7 +142,7 @@ class WorldBankDBPostgres:
                             country_capital_city = EXCLUDED.country_capital_city,
                             country_longitude = EXCLUDED.country_longitude,
                             country_latitude = EXCLUDED.country_latitude,
-                            data_source = EXCLUDED.data_source,
+                            data_source = 'WorldBank API',
                             update_count = european_country_general_info.update_count + 1,
                             last_updated = NOW()
                         WHERE
@@ -201,45 +165,104 @@ class WorldBankDBPostgres:
             self.cursor.executemany(query.as_string(self.connection), data)
             self.connection.commit()
             print(f"Successfully added or updated {len(data)} rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ")
-        except (Exception, psycopg2.DatabaseError) as e:
+        except (Exception, psycopg.DatabaseError) as e:
             self.connection.rollback()
             raise DatabaseError(f"Something went wrong with adding the data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
 
+    def __str__(self):
+        return f"WorldBank PostgreSQL database (schema: thi_miniproject)"
+
     def get_all_countries_info(self):
+        """
+        fetch and display all countries' general info
+        """
         try:
             self.cursor.execute("SELECT * FROM european_country_general_info ORDER BY country_code")
             all_countries_rows = self.cursor.fetchall()
+            if not all_countries_rows:
+                print(f"No country info available for {self}.")
+                return
+            category = [row[0] for row in self.cursor.description]
+            print(f"\n--- Printing {len(all_countries_rows)} countries' general info for {self}: ---")
+            number = 1
             for row in all_countries_rows:
-                print(row)
-        except (Exception, psycopg2.DatabaseError) as e:
+                print(f"\n{number}. Country info of '{row[1]}' is:")
+                number += 1
+                country_info = []
+                for col, val in zip(category, row):
+                    # convert decimals and datetimes to readable formats:
+                    if isinstance(val, Decimal):
+                        val = float(val)
+                    elif isinstance(val, datetime):
+                        val = val.strftime("%Y-%m-%d %H:%M:%S %Z") # strftime stands for 'string format time'
+                    country_info.append(f"{col}: {val}")
+                print(", ".join(country_info))
+        except (Exception, psycopg.DatabaseError) as e:
             self.connection.rollback()
             raise DatabaseError(f"Something went wrong with getting all countries' info. Error type: {type(e).__name__}, error message: '{e}'.")
 
-    def get_country_info(self, country_code):
+    def get_country_info(self, country_names):
+        """
+        fetch and display general info for one or more countries (case-insensitive)
+        - country_names can be a single string: "Austria, germany" or a list: ["Austria", "gErManY"]
+        - update 'docker compose', service 'app_base' environment var COUNTRIES_OF_INTEREST to include or remove any european countries to be displayed
+        :param country_names
+        :return: general country info
+        """
         try:
-            self.cursor.execute("SELECT * FROM european_country_general_info WHERE country_code ILIKE %s", (f"%{country_code}%",))
-            country_row = self.cursor.fetchall()
+            # turn input into a list of strings in case it is a string
+            if isinstance(country_names, str):
+                country_names = [name.strip() for name in country_names.split(",")]
+
+            print(f"\n--- Printing general country info for the following countries of interest: {', '.join(country_names)} (to update or change this list, go to 'docker compose' - service 'app_base' environment) ---")
+
+            self.cursor.execute("SELECT * FROM european_country_general_info WHERE country_name ILIKE ANY(%s) ORDER BY country_name;", (country_names,))
+            country_rows = self.cursor.fetchall()
+            if not country_rows:
+                print(f"No country info found for: {', '.join(country_names)}.")
+                return
             category = [row[0] for row in self.cursor.description]
-            print(f"Country info of {country_code} is: {country_row}.")
-        except (Exception, psycopg2.DatabaseError) as e:
-            raise DatabaseError(f"Something went wrong with getting the country info of '{country_code}'. Error type: {type(e).__name__}, error message: '{e}'.")
+
+            number = 1
+            for row in country_rows:
+                print(f"\n{number}. Country info of '{row[1]}' is:")
+                number += 1
+                country_info = []
+                for col, val in zip(category, row):
+                    # convert decimals and datetimes to readable formats:
+                    if isinstance(val, Decimal):
+                        val = float(val)
+                    elif isinstance(val, datetime):
+                        val = val.strftime("%Y-%m-%d %H:%M:%S %Z")  # strftime stands for 'string format time'
+                    country_info.append(f"{col}: {val}")
+                print(", ".join(country_info))
+        except (Exception, psycopg.DatabaseError) as e:
+            raise DatabaseError(f"Something went wrong with getting the country info of '{', '.join(country_names)}'. Error type: {type(e).__name__}, error message: '{e}'.")
 
     def close_connection(self):
         try:
             self.cursor.close()
-        except (Exception, psycopg2.DatabaseError) as e:
+        except (Exception, psycopg.DatabaseError) as e:
             raise DatabaseError(f"Something went wrong with closing the connection. Error type: {type(e).__name__}, error message: '{e}'.")
 
 if __name__ == "__main__":
     api_data = get_European_country_general_info()
     # api_data is a list of the following lists: country_code, country_name, country_income_level, country_capital_city, country_longitude, country_latitude
     wb_db = WorldBankDBPostgres()
-    wb_db._create_schema()
-    wb_db._create_table()
     wb_db.add_data_to_db(api_data)
-    # wb_db.get_all_countries_info()
-    wb_db.get_country_info("AT")
-    wb_db.get_country_info("DE")
+
+    display_all = os.getenv("DISPLAY_ALL_COUNTRIES_INFO", "false").strip().lower() in ("1", "true", "yes")
+    if display_all:
+        wb_db.get_all_countries_info()
+    else:
+        print(f"\n--- The user does not wish to display all countries' general info (•́ ᴖ •̀) (if you changed your mind, change the var DISPLAY_ALL_COUNTRIES_INFO to 'true' in 'docker compose' - service 'app_base' environment.) ---")
+
+    names = os.getenv("COUNTRIES_OF_INTEREST", "").strip()
+    if names:
+        wb_db.get_country_info(names)
+    else:
+        print("\n--- Printing general country info for the countries of interest: No info about countries of interest was given ^. .^₎⟆ ---")
+
     wb_db.close_connection()
 
 
