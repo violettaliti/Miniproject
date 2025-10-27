@@ -20,7 +20,8 @@ def get_European_country_general_info():
             country_info = response.json()
             # print(country_info)
 
-            country_code_all = []
+            country_iso3code_all = []
+            country_iso2code_all = []
             country_name_all = []
             country_income_level_all = []
             country_capital_city_all = []
@@ -28,8 +29,11 @@ def get_European_country_general_info():
             country_latitude_all = []
 
             for country_dict in country_info[1]:
-                country_code = country_dict["iso2Code"]
-                country_code_all.append(country_code)
+                country_iso3code = country_dict["id"]
+                country_iso3code_all.append(country_iso3code)
+
+                country_iso2code = country_dict["iso2Code"]
+                country_iso2code_all.append(country_iso2code)
 
                 country_name = country_dict["name"]
                 country_name_all.append(country_name)
@@ -47,7 +51,8 @@ def get_European_country_general_info():
                 country_latitude_all.append(float(country_latitude))
 
             print("....Collecting data.... (•˕•マ.ᐟ \n")
-            print(f"List of country codes:\n{country_code_all}\n")
+            print(f"List of country iso3codes:\n{country_iso3code_all}\n")
+            print(f"List of country iso2codes:\n{country_iso2code_all}\n")
             print(f"List of country names:\n{country_name_all}\n")
             print(f"List of country income levels:\n{country_income_level_all}\n")
             print(f"List of country capital city:\n{country_capital_city_all}\n")
@@ -56,7 +61,8 @@ def get_European_country_general_info():
             print("---- Finish collecting data! ᓚ₍⑅^..^₎♡ ----\n")
 
             rows = list(zip( # zip() transposes a list of columns into a list of rows, suitable for INSERT query later (to add the data to db)
-                country_code_all,
+                country_iso3code_all,
+                country_iso2code_all,
                 country_name_all,
                 country_income_level_all,
                 country_capital_city_all,
@@ -69,6 +75,32 @@ def get_European_country_general_info():
 
     except requests.exceptions.RequestException as e:
         print(f"Something went wrong ૮₍•᷄  ༝ •᷅₎ა --> Error message: {type(e).__name__} - {e}.")
+
+"""
+# working in progress
+
+def get_corruption_info():
+    try:
+        url = "https://api.worldbank.org/v2/country/AT;BE;BG;HR;CY;CZ;DK;EE;FI;FR;DE;GR;HU;IS;IE;IT;LV;LT;LU;MT;NL;NO;PL;PT;RO;SK;SI;ES;SE;CH;GB;AL;BA;RS;MK;ME;XK;UA;MD;BY/indicators/CC.EST?format=json"
+        response = requests.get(url, timeout=5)
+        print("\nQueried URL:", response.url, "\n")
+
+        if response.status_code == 200:
+            corruption_info = response.json()
+            print(corruption_info)
+
+            for country_dict in corruption_info[1]:
+                country_id = country_dict["country"]["id"]
+                country_name = country_dict["country"]["value"]
+
+        else:
+                print(f"Something went wrong, I couldn't fetch the requested data /ᐠ-˕-マ. Error status code: {response.status_code}.")
+
+    except requests.exceptions.RequestException as e:
+        print(f"Something went wrong ૮₍•᷄  ༝ •᷅₎ა --> Error message: {type(e).__name__} - {e}.")
+
+get_corruption_info()
+"""
 
 #### Saving / persisting to db
 class DatabaseError(Exception):
@@ -132,11 +164,12 @@ class WorldBankDBPostgres:
             return
 
         query = sql.SQL("""
-                        INSERT INTO {} (country_code, country_name, country_income_level, country_capital_city,
+                        INSERT INTO {} (country_iso3code, country_iso2code, country_name, country_income_level, country_capital_city,
                                         country_longitude, country_latitude)
-                        VALUES (%s, %s, %s, %s, %s, %s)
-                        ON CONFLICT (country_code) 
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT (country_iso3code) 
                         DO UPDATE SET
+                            country_iso2code = EXCLUDED.country_iso2code,
                             country_name = EXCLUDED.country_name,
                             country_income_level = EXCLUDED.country_income_level,
                             country_capital_city = EXCLUDED.country_capital_city,
@@ -146,17 +179,19 @@ class WorldBankDBPostgres:
                             update_count = european_country_general_info.update_count + 1,
                             last_updated = NOW()
                         WHERE
-                            (european_country_general_info.country_name,
-                             european_country_general_info.country_income_level,
-                             european_country_general_info.country_capital_city,
-                             european_country_general_info.country_longitude,
-                             european_country_general_info.country_latitude)
+                            (european_country_general_info.country_iso2code,
+                            european_country_general_info.country_name,
+                            european_country_general_info.country_income_level,
+                            european_country_general_info.country_capital_city,
+                            european_country_general_info.country_longitude,
+                            european_country_general_info.country_latitude)
                         IS DISTINCT FROM
-                            (EXCLUDED.country_name,
-                             EXCLUDED.country_income_level,
-                             EXCLUDED.country_capital_city,
-                             EXCLUDED.country_longitude,
-                             EXCLUDED.country_latitude);
+                            (EXCLUDED.country_iso2code,
+                            EXCLUDED.country_name,
+                            EXCLUDED.country_income_level,
+                            EXCLUDED.country_capital_city,
+                            EXCLUDED.country_longitude,
+                            EXCLUDED.country_latitude);
                         """).format(sql.Identifier(table_name))
         # upsert = insert + update -> if inserting a row which has an existing country code (our primary key), then update that row
         # and add to the update_count only if the new data is different from the old one (only meaningful updates count)
@@ -177,7 +212,7 @@ class WorldBankDBPostgres:
         fetch and display all countries' general info
         """
         try:
-            self.cursor.execute("SELECT * FROM european_country_general_info ORDER BY country_code")
+            self.cursor.execute("SELECT * FROM european_country_general_info ORDER BY country_iso3code")
             all_countries_rows = self.cursor.fetchall()
             if not all_countries_rows:
                 print(f"No country info available for {self}.")
