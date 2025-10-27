@@ -3,7 +3,8 @@ CREATE schema IF NOT EXISTS thi_miniproject;
 SET search_path TO thi_miniproject;
 
 CREATE TABLE european_country_general_info(
-	country_code TEXT PRIMARY KEY,
+	country_iso3code TEXT PRIMARY KEY,
+    country_iso2code TEXT,
 	country_name TEXT,
 	country_income_level TEXT,
 	country_capital_city TEXT,
