@@ -7,9 +7,16 @@ from psycopg import sql
 from dotenv import load_dotenv
 from decimal import Decimal # part of python standard library
 from datetime import datetime # part of python standard library
+from pathlib import Path # part of python standard library
+import pandas as pd
 
 #### API requests
 # Full list of World Bank ISO2 codes for countries in Europe
+europe_countries_codes = = [
+    "AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IS","IE",
+    "IT","LV","LT","LU","MT","NL","NO","PL","PT","RO","SK","SI","ES","SE","CH",
+    "GB","AL","BA","RS","MK","ME","XK","UA","MD","BY"
+]
 
 def get_European_country_general_info():
     try:
@@ -102,6 +109,40 @@ def get_corruption_info():
 
 get_corruption_info()
 """
+
+indicators = [
+    "NY.GDP.MKTP.KD.ZG",  # GDP growth (annual %)
+    "FP.CPI.TOTL.ZG",     # Inflation, consumer prices (annual %)
+    "SL.UEM.TOTL.ZS"      # Unemployment, total (% of labor force)
+]
+
+def test():
+    try:
+        url = "https://api.worldbank.org/v2/country/all/indicator/SP.POP.TOTL;NY.GDP.MKTP.KD.ZG;FP.CPI.TOTL.ZG;SL.UEM.TOTL.ZS;CC.EST?per_page=20000&format=csv" # indicators:  | NY.GDP.MKTP.KD.ZG: GDP growth | CC.EST: corruption info
+        response = requests.get(url, timeout=5)
+        print("\nQueried URL:", response.url, "\n")
+
+        # if running inside Docker -> keep this as /data
+        # if running locally outside Docker -> set DATA_DIR="postgres_data/data"
+        DATA_DIR = Path(os.getenv("DATA_DIR", "/data"))
+        DATA_DIR.mkdir(parents=True, exist_ok=True)  # create the folder (and any missing parents) if it doesn’t exist; don’t error if it already exists
+
+        out_path = DATA_DIR / "wb_all_countries_multi_indicators.csv"
+
+        if response.status_code == 200:
+            out_path.write_bytes(response.content)
+
+            print(f"Saved → {out_path}")
+
+            df = pd.read_csv("wb_all_countries_multi_indicators.csv")
+            print(df.head())
+
+        else:
+            print(f"Something went wrong, I couldn't fetch the requested data /ᐠ-˕-マ. Error status code: {response.status_code}.")
+
+    except requests.exceptions.RequestException as e:
+        print(f"Something went wrong ૮₍•᷄  ༝ •᷅₎ა --> Error message: {type(e).__name__} - {e}.")
+
 
 #### Saving / persisting to db
 class DatabaseError(Exception):
@@ -299,6 +340,8 @@ if __name__ == "__main__":
         wb_db.get_country_info(names)
     else:
         print("\n--- Printing general country info for the countries of interest: No info about countries of interest was given ^. .^₎⟆ ---")
+
+    test()
 
     wb_db.close_connection()
 
