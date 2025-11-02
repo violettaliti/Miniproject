@@ -1,3 +1,4 @@
+# imports
 import os # os is part of python standard library -> no need to add to requirements.txt
 import requests
 import psycopg
@@ -133,7 +134,7 @@ class WorldBankDBPostgres:
             raise DatabaseError(f"Something went wrong with the connection ≽^- ˕ -^≼ Error type: {type(e).__name__}, error message: '{e}'.")
 
     @staticmethod
-    def connect_with_retry(dsn_kwargs, retries = 15, delay = 3): # helper function
+    def connect_with_retry(dsn_kwargs, retries = 5, delay = 3): # helper function
         """
         try to connect to postgres multiple times before giving up.
         useful when db starts slower than the app in docker compose.
@@ -281,6 +282,7 @@ class WorldBankDBPostgres:
             raise DatabaseError(f"Something went wrong with closing the connection. Error type: {type(e).__name__}, error message: '{e}'.")
 
 if __name__ == "__main__":
+    print("Hello from api_logger!")
     api_data = get_European_country_general_info()
     # api_data is a list of the following lists: country_code, country_name, country_income_level, country_capital_city, country_longitude, country_latitude
     wb_db = WorldBankDBPostgres()
