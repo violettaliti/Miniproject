@@ -171,14 +171,31 @@ def merge_tables_by_country(normalised_tables):
     # reorder columns: country, then ASC years
     sorted_merged_table = merged_table[["Country"] + sorted_year_cols]
 
-    print(f"The first 5 rows of sorted, merged table:\n\n", sorted_merged_table.head(5), "\n")
-    print("The merged table description:\n\n", sorted_merged_table.describe())
+    print(f"The first 5 rows of the sorted, merged table:\n\n", sorted_merged_table.head(5), "\n")
+    print("NaN_values count per year:\n", sorted_merged_table.isna().sum())
+    print("\nThe merged table description:\n\n", sorted_merged_table.describe())
     print(f"\n--------------- Finished merging {len(normalised_tables)} tables! ₍^. .^₎Ⳋ -----------------\n")
     return sorted_merged_table
+
+def transform_data(table_to_be_transformed):
+    print(f"----------- Transforming the table into a 3NF-compliant dataset! -----------\n")
+    transformed_df = table_to_be_transformed.melt(
+        id_vars = ["Country"], # column "country" remains the same / fixed
+        var_name = "Year", # name of the new column for the former headers (e.g. 1995, 2024)
+        value_name = "CPI Score" # name of the new column for the old values (cpi scores)
+    )
+    transformed_df["Year"] = transformed_df["Year"].astype(int)
+    transformed_df["CPI Score"] = transformed_df["CPI Score"].astype(float)
+
+    print(f"The first 5 rows of the transformed, 3NF-compliant table:\n\n", transformed_df.head(5), "\n")
+    print("The transformed table description:\n\n", transformed_df.describe())
+    print(f"\n--------------- Finished transforming the table! ₍^. .^₎Ⳋ -----------------\n")
+    return transformed_df
 
 if __name__ == "__main__":
     print("Hello from web_logger!")
     dfs = scrape_country_cpi_tables()
     normalised_dfs = normalise_cpi_data(dfs)
-    merge_tables_by_country(normalised_dfs)
+    sorted_merged_table = merge_tables_by_country(normalised_dfs)
+    transformed_table = transform_data(sorted_merged_table)
 
