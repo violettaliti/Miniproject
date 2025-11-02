@@ -1,15 +1,11 @@
 # imports
-
-import os # part of python standard library
 import requests
 from bs4 import BeautifulSoup
-import time # part of python standard library
 import pandas as pd
-import re # part of python standard library
-from io import StringIO # part of python standard library
+from functools import reduce # part of python standard library
 
 # my web crawler identity
-headers = {
+headers_default = {
     "User-Agent": (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) "
         "Gecko/20100101 Firefox/143.0 "
@@ -25,7 +21,21 @@ headers = {
 # This site blocks scraping so I've switched to Wikipedia instead:
 wiki_url = "https://en.wikipedia.org/wiki/List_of_countries_by_Corruption_Perceptions_Index"
 
-def scrape_country_cpi_tables(url = wiki_url, headers = headers):
+def avoid_index_error(row_data, index):
+    """
+    this function helps safely return the text of a cell and avoid index error
+    if the index doesn't exist or the cell is empty, return None
+    :return: None or text
+    """
+    if index < len(row_data):
+        txt = row_data[index].get_text(strip = True)
+        if txt in {"-", ""}:
+            return None
+        else:
+            return txt
+    return None
+
+def scrape_country_cpi_tables(url = wiki_url, headers = headers_default):
     """
     this function scrapes the wiki page 'List of countries by Corruption Perceptions Index'.
     :param url: https://en.wikipedia.org/wiki/List_of_countries_by_Corruption_Perceptions_Index
@@ -34,7 +44,7 @@ def scrape_country_cpi_tables(url = wiki_url, headers = headers):
     """
     try:
         # make an http request
-        response = requests.get(url, headers=headers, timeout=5)
+        response = requests.get(url, headers = headers, timeout = 5)
         print("\nQuerries URL for scraping:", response.url, "\n")
 
         if response.status_code == 200:
@@ -47,12 +57,12 @@ def scrape_country_cpi_tables(url = wiki_url, headers = headers):
 
             # get all tables on the page (with the wikitable class)
             all_tables = soup.find_all("table", {"class": "wikitable"})
-            print(f"Yay ฅ^>⩊<^ฅ found {len(all_tables)} tables in total on this page!")
+            print(f"Yay ฅ^>⩊<^ฅ found {len(all_tables)} tables in total on this page!\n")
 
             valid_tables = []
 
             for table in all_tables:
-                ths = [th.get_text(strip=True) for th in table.find_all("th")]
+                ths = [th.get_text(strip = True) for th in table.find_all("th")]
                 # print(ths)
                 if any("Nation" in h for h in ths): # only take relevant tables which contains 'Nation'
                     valid_tables.append(table)
@@ -60,114 +70,59 @@ def scrape_country_cpi_tables(url = wiki_url, headers = headers):
             if not valid_tables:
                 raise Exception("No valid tables found! /ᐠ-˕-マⳊ")
             else:
-                print(f"Among the {len(all_tables)} tables on the site, there are {len(valid_tables)} relevant tables! 𖹭")
+                print(f"Among the {len(all_tables)} tables on the site, there are {len(valid_tables)} relevant tables!")
+
+            dfs = []
 
             for idx, table in enumerate(valid_tables, start = 1):
-                categories = [th.get_text(strip=True) for th in table.find_all("th")] # get column names
-                print(f"Table #{idx} - original categories: {categories}.")
+                print(f"\n-------------------------- Scraping table #{idx} -----------------------------\n")
+
+                headers_list = [th.get_text(strip = True) for th in table.find_all("th")]
+
+                # only get relevant column names (rank, country, and years)
+                valid_categories = []
+
+                for element in headers_list:
+                    if element == "Nation\xa0or\xa0Territory":
+                        valid_categories.append("Country")
+                    elif element[0] in {"1", "2"}: # if it's a year column header starting with 1 (e.g. 1995) or 2 (2001)
+                        valid_categories.append(element[:4]) # take only the first 4 digits belonging to the year
+                print(f"Table #{idx} - original categories: {valid_categories}.")
+
+                years = valid_categories[1:]
+                years_count = len(years)
+                print(f"Table #{idx} - year range: {years[-1]}-{years[0]}, number of year columns: {years_count}.")
 
                 # create dataframe for each valid table
-                df = pd.DataFrame(columns=categories)
+                df = pd.DataFrame(columns = valid_categories)
 
                 table_content = table.find_all("tr")
-
-                countries_list = []
-                year_2024_scores = []
-                year_2023_scores = []
-                year_2022_scores = []
-                year_2021_scores = []
-                year_2020_scores = []
-
                 for row in table_content[2:]:
                     row_data = row.find_all("td")
-                    countries_list.append(row_data[1].text)
-                    year_2024_scores.append(row_data[2].text)
-                    year_2023_scores.append(row_data[4].text)
-                    year_2022_scores.append(row_data[6].text)
-                    #print(row_data[6].text)
+                    if not row_data:
+                        continue
 
-                    year_2021_scores.append(row_data[8].text)
-                    print(row_data[8].text)
+                    if years_count < 1:
+                        print("There is no year data on this table!")
 
-                    year_2020_scores.append(row_data[10].text)
+                    # use the avoid_index_error method to avoid rows with fewer data than available columns
+                    try:
+                        data = {"Country": avoid_index_error(row_data, 1)}
+                        for year_index, year in enumerate(years):
+                            cell_index = 2 + (year_index * 2)
+                            data[year] = avoid_index_error(row_data, cell_index) # this is needed because tables have different numbers of year columns
 
-                print(df.to_string())
+                        df.loc[len(df)] = data # each iteration adds one row in the df --> Append a new row at the next index position, using the dictionary data to fill columns, and assign NaN to any columns that aren’t specified.
+                    except IndexError:
+                        continue # just skip rows with no data
 
-                    # individual_data = [data.text.strip() for data in row_data]
-                    # print(individual_data)
+                print(f"\nTable #{idx} scraped successfully with {len(df)} rows!\n")
+                print(f"The first 5 rows of table #{idx}:\n", df.head(5), "\n")
 
-                    # append datarow at the end
-                    # len_df = len(df)
-                    # df.loc[len_df] = individual_data
+                dfs.append(df)
 
-                # print(df.to_string())
-
-                """
-                for row in table.find_all("tr")[1:]:  # skip header row
-                    # get all header/data cells in this row
-                    cells = row.find_all(["th", "td"])
-
-                    # extract text from each cell (THIS replaces row_data.text)
-                    values = [c.get_text(" ", strip=True) for c in cells]
-
-                    # pad/trim to header length so assignment doesn’t crash
-                    if len(values) < len(categories):
-                        values += [""] * (len(categories) - len(values))
-                    elif len(values) > len(categories):
-                        values = values[:len(categories)]
-
-                    df.loc[len(df)] = values
-
-                print(df.head(), "\n")
-                
-                """
-
-                """
-                # turn the html table into a pandas dataframe
-                df = pd.read_html(StringIO(str(table)))[0]
-
-                # rename the 'nation or territory' column to 'country'
-                # for col in df.columns:
-                #    if 'Nation' in col or 'Territory' in col:
-                #        df = df.rename(columns = {col: "Country"})
-                #        break # no need to check other cols after having found the 'nation' col
-
-                year_cols = [col for col in df.columns if re.fullmatch(r"(19|20)\d{2}", str(col))] # only take cols with valid years
-
-                cols_kept = ["Nation\xa0or\xa0Territory"] + year_cols
-                df = df[cols_kept]
-                print(f"Columns kept: {cols_kept}")
-
-                # drop unwanted 'Score', 'Δ[i]' or reference-number-like cols
-                df = df.loc[:, ~df.columns.str.contains(r"Score|Δ|\[|\]", regex=True)]
-
-                print(f"Table #{idx} -  Cleaned columns: {list(df.columns)}.")
-
-                print(df.head(), "\n")
-
-                """
-
-
-
-
-
-
-
-            # first table - CPI scores for 2020-2024: tables[2]
-            # print(tables)
-
-            # second table - CPI scores for 2012-2019: tables[3]
-
-            # third table - CPI scores for 2003-2011: tables[5]
-
-            # fourth table - CPI scores for 1998-2002: tables[6]
-
-            # fifth table - CPI scores for 1995-1997: tables[8]
-
-            # get categories / column names
-            # use .strip() to remove extra whitespaces and specified characters like \n
-            # categories = [val.text.strip() for val in tables[0].find("th")]
-            # print(categories)
+            print("----------- Finished scraping all valid tables! ₍^. .^₎⟆ -------------\n")
+            return dfs
 
         else:
             print(f"Something went wrong, I couldn't fetch the requested data /ᐠ-˕-マ. Error status code: {response.status_code}.")
@@ -176,9 +131,54 @@ def scrape_country_cpi_tables(url = wiki_url, headers = headers):
     except requests.exceptions.RequestException as e:
         print(f"Something went wrong ૮₍•᷄  ༝ •᷅₎ა --> Error message: {type(e).__name__} - {e}.")
 
-def normalise_cpi_data():
-    pass
+def normalise_cpi_data(tables_to_normalise):
+    """
+    this function normalises the cpi scores data:
+     (i) convert all scores to numeric in df (currently they're str / object)
+     (ii) normalise scores for the years before 2012 (when the scores were 0-10)
+    :return: scores in numeric datatype, normalised cpi scores (0-100) for scores before 2012
+    """
+    print("----------- Normalising the data (scores after 2012 is based on 0-100 scale, before 2012 based on 0-10 scale) -----------\n")
+    for i, df in enumerate(tables_to_normalise, start = 1):
+        year_cols = [col for col in df.columns if str(col).isdigit() and 1995 <= int(col) <= 2024] # identify which columns are year columns
+
+        # convert all years to numeric in df
+        df[year_cols] = df[year_cols].apply(pd.to_numeric, errors = "coerce") # errors="coerce": if it cannot be converted, make it NaN
+
+        # normalise values for years before 2012 (table 3, 4, 5)
+        if i in {3, 4, 5}:
+            df[year_cols] = df[year_cols] * 10 # multiply numeric values by 10 to scale the old CPI scores from 0-10 to 0-100
+    print("--------------- The data has been normalised! ₍^. .^₎Ⳋ ---------------\n")
+    return tables_to_normalise
+
+def merge_tables_by_country(normalised_tables):
+    """
+    this function merges the tables by country
+    :param normalised_tables
+    :return: one merged table
+    """
+    print(f"----------- Merging the {len(normalised_tables)} tables into one table (on the column 'country') -----------\n")
+    # remove duplicate country rows
+    cleaned_tables = [df.drop_duplicates(subset = ["Country"]) for df in normalised_tables]
+
+    # merge one after another by Country, keeping all countries
+    merged_table = reduce(lambda left, right: pd.merge(left, right, on = "Country", how = "outer"), cleaned_tables)
+
+    # identify year columns and sort by year
+    year_cols = [col for col in merged_table.columns if col != "Country"]
+    sorted_year_cols = sorted(year_cols, key = int) # key = int: use the integer value of each item as the sort key
+
+    # reorder columns: country, then ASC years
+    sorted_merged_table = merged_table[["Country"] + sorted_year_cols]
+
+    print(f"The first 5 rows of sorted, merged table:\n\n", sorted_merged_table.head(5), "\n")
+    print("The merged table description:\n\n", sorted_merged_table.describe())
+    print(f"\n--------------- Finished merging {len(normalised_tables)} tables! ₍^. .^₎Ⳋ -----------------\n")
+    return sorted_merged_table
 
 if __name__ == "__main__":
     print("Hello from web_logger!")
-    scrape_country_cpi_tables()
+    dfs = scrape_country_cpi_tables()
+    normalised_dfs = normalise_cpi_data(dfs)
+    merge_tables_by_country(normalised_dfs)
+
