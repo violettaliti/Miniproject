@@ -10,13 +10,17 @@ CREATE TABLE IF NOT EXISTS thi_miniproject.year(
 	year INTEGER PRIMARY KEY
 );
 
-DO $$ -- anonymous one-time executable block, not a stored function 
+-- anonymous one-time executable block, not a stored function
+-- ON CONFLICT (year) DO NOTHING: to not throw errors or duplicate the years
+DO $$
+BEGIN
 	FOR y IN 1960..2025 LOOP
 		INSERT INTO thi_miniproject.year(year)
 		VALUES (y)
-		ON CONFLICT (year) DO NOTHING; -- to not throw errors or duplicate the years
+		ON CONFLICT (year) DO NOTHING; 
 	END LOOP;
-END $$
+END; 
+$$
 LANGUAGE plpgsql;
 
 ----------------------------------------------------------
