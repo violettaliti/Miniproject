@@ -12,7 +12,7 @@ import pandas as pd
 
 #### API requests
 # Full list of World Bank ISO2 codes for countries in Europe
-europe_countries_codes = = [
+europe_countries_codes = [
     "AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IS","IE",
     "IT","LV","LT","LU","MT","NL","NO","PL","PT","RO","SK","SI","ES","SE","CH",
     "GB","AL","BA","RS","MK","ME","XK","UA","MD","BY"
