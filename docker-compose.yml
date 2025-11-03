@@ -5,6 +5,7 @@ services:
     build: .
     volumes:
       - ./src/:/app
+      - ./postgres_data/data:/data
     env_file:
       - .env
     environment:
@@ -53,6 +54,7 @@ services:
     volumes:
       - ./postgres_data/db:/var/lib/postgresql/data # bind mount for persistent db
       - ./postgres_data/init:/docker-entrypoint-initdb.d # bind mount for init.sql
+      - ./postgres_data/data:/data # for the db to import the scraped csvs from World Bank API via COPY if need be
     networks:
       - miniproject_network
     healthcheck:
