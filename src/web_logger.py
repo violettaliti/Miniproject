@@ -192,6 +192,7 @@ def transform_data(table_to_be_transformed):
     print(f"\n--------------- Finished transforming the table! ₍^. .^₎Ⳋ -----------------\n")
     return transformed_df
 
+
 if __name__ == "__main__":
     print("Hello from web_logger!")
     dfs = scrape_country_cpi_tables()
