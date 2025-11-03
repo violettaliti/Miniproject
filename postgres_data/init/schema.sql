@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS thi_miniproject.country_general_info(
 -- Tables for data from web scraping
 ----------------------------------------------------------
 -- staging CPI table
-CREATE TABLE IF NOT EXISTS thi_miniproject.cpi_raw(
+CREATE TABLE IF NOT EXISTS thi_miniproject.staging_cpi_raw(
 	country_name TEXT NOT NULL,
 	year INTEGER NOT NULL,
 	cpi_score NUMERIC(5, 2) CHECK (cpi_score BETWEEN 0 AND 100)

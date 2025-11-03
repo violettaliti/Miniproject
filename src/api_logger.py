@@ -1,8 +1,8 @@
 # imports
-import os # os is part of python standard library -> no need to add to requirements.txt
+import os # part of python standard library -> no need to add to requirements.txt
 import requests
 import psycopg
-import time # time is part of python standard library -> no need to add to requirements.txt
+import time # part of python standard library -> no need to add to requirements.txt
 from psycopg import sql
 from dotenv import load_dotenv
 from decimal import Decimal # part of python standard library
@@ -22,46 +22,52 @@ europe_countries_codes = [
 ]
 
 def get_country_general_info():
+    """
+    this function fetch data about all countries' general info through an API request to World Bank API
+    :return: countries general info
+    """
     try:
         url = "https://api.worldbank.org/v2/country/?per_page=20000&format=json"
         response = requests.get(url, timeout=5)
         print("\nQueried URL:", response.url, "\n")
 
-        if response.status_code == 200:
-            print("....API request approved! Collecting data.... (•˕•マ.ᐟ \n")
-            country_info = response.json()[1] # exclude the metadata info
-            filtered_country_info = [country for country in country_info if country["region"]["value"] != "Aggregates"]
-
-            country_info_df = pd.DataFrame([
-                {
-                    "country_iso3code": country_dict.get("id"),
-                    "country_iso2code": country_dict.get("iso2Code"),
-                    "country_name": country_dict.get("name"),
-                    "region_name": country_dict.get("region", {}).get("value"),
-                    "region_id": country_dict.get("region", {}).get("id"),
-                    "region_iso2code": country_dict.get("region", {}).get("iso2code"),
-                    "country_income_level": country_dict.get("incomeLevel", {}).get("value"),
-                    "country_capital_city": country_dict.get("capitalCity"),
-                    "country_longitude": float(country_dict.get("longitude")) if country_dict.get(
-                        "longitude") else None,
-                    "country_latitude": float(country_dict.get("latitude")) if country_dict.get("latitude") else None
-                }
-                for country_dict in filtered_country_info
-            ])
-
-            print("Country info df shape:", country_info_df.shape)
-            print("\nFirst five rows of the country info df:\n", country_info_df.head())
-            print("\nDescription of the country info df:\n", country_info_df.describe(), "\n")
-            print(country_info_df.info())
-            print("\n---- Finish collecting data! ᓚ₍⑅^..^₎♡ ----\n")
-
-            # turn the df into a list of tuples for saving into the db later
-            country_info_db = country_info_df.replace({np.nan: None}) # replace NaN with None for PostgreSQL
-            country_rows = list(country_info_db.itertuples(index=False, name=None)) # convert to list of tuples in correct column order
-
-            return country_rows
-        else:
+        if response.status_code != 200:
             print(f"Something went wrong, I couldn't fetch the requested data /ᐠ-˕-マ. Error status code: {response.status_code}.")
+            print(response.content)
+            return []
+
+        print("....API request approved! Collecting data.... (•˕•マ.ᐟ \n")
+        country_info = response.json()[1] # exclude the metadata info
+        filtered_country_info = [country for country in country_info if country["region"]["value"] != "Aggregates"]
+
+        country_info_df = pd.DataFrame([
+            {
+                "country_iso3code": country_dict.get("id"),
+                "country_iso2code": country_dict.get("iso2Code"),
+                "country_name": country_dict.get("name"),
+                "region_name": country_dict.get("region", {}).get("value"),
+                "region_id": country_dict.get("region", {}).get("id"),
+                "region_iso2code": country_dict.get("region", {}).get("iso2code"),
+                "country_income_level": country_dict.get("incomeLevel", {}).get("value"),
+                "country_capital_city": country_dict.get("capitalCity"),
+                "country_longitude": float(country_dict.get("longitude")) if country_dict.get(
+                    "longitude") else None,
+                "country_latitude": float(country_dict.get("latitude")) if country_dict.get("latitude") else None
+            }
+            for country_dict in filtered_country_info
+        ])
+
+        print("Country info df shape:", country_info_df.shape)
+        print("\nFirst five rows of the country info df:\n", country_info_df.head())
+        print("\nDescription of the country info df:\n", country_info_df.describe(), "\n")
+        print(country_info_df.info())
+        print("\n---- Finish collecting data! ᓚ₍⑅^..^₎♡ ----\n")
+
+        # turn the df into a list of tuples for saving into the db later
+        country_info_db = country_info_df.replace({np.nan: None}) # replace NaN with None for postgreSQL
+        country_rows = list(country_info_db.itertuples(index=False, name=None)) # convert to list of tuples in correct column order
+
+        return country_rows
 
     except requests.exceptions.RequestException as e:
         print(f"Something went wrong ૮₍•᷄  ༝ •᷅₎ა --> Error message: {type(e).__name__} - {e}.")
@@ -109,6 +115,9 @@ class DatabaseError(Exception):
 
 class WorldBankDBPostgres:
     def __init__(self):
+        """
+        automatically connect to postgres database when a class object is instantiated.
+        """
         load_dotenv()  # this reads .env locally, in docker env is already there / set
         dbname = os.getenv("DB_NAME", os.getenv("POSTGRES_DB", "worldbank"))  # double fallbacks: if there's no env var name 'DB_NAME', then check for 'POSTGRES_DB', if still fails, use the default 'worldbank'
         user = os.getenv("DB_USER", os.getenv("POSTGRES_USER", "user"))
@@ -153,6 +162,7 @@ class WorldBankDBPostgres:
         raise last_err
 
     def _drop_table(self, table_name):
+        """drop table as needed"""
         try:
             self.cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
             self.connection.commit()
@@ -160,6 +170,7 @@ class WorldBankDBPostgres:
             raise DatabaseError(f"Something went wrong with dropping the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
 
     def add_data_to_db(self, data: list = None, table_name: str = "country_general_info"):
+        """persist acquired data into db"""
         if not data:
             print("There is no data to add to the database. /ᐠ-˕-マ")
             return
@@ -215,6 +226,7 @@ class WorldBankDBPostgres:
             raise DatabaseError(f"Something went wrong with adding the data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
 
     def __str__(self):
+        """replace the string special method to automatically display the db name"""
         return f"WorldBank PostgreSQL database (schema: thi_miniproject)"
 
     def get_all_countries_info(self):
@@ -248,18 +260,18 @@ class WorldBankDBPostgres:
 
     def get_country_info(self, country_names):
         """
-        fetch and display general info for one or more countries (case-insensitive)
+        fetch and display info for one or more countries (case-insensitive)
         - country_names can be a single string: "Austria, germany" or a list: ["Austria", "gErManY"]
-        - update 'docker compose', service 'app_base' environment var COUNTRIES_OF_INTEREST to include or remove any european countries to be displayed
+        - update 'docker compose', service 'app_base' environment var COUNTRIES_OF_INTEREST to include or remove any countries to be displayed
         :param country_names
-        :return: general country info
+        :return: country info
         """
         try:
             # turn input into a list of strings in case it is a string
             if isinstance(country_names, str):
                 country_names = [name.strip() for name in country_names.split(",")]
 
-            print(f"\n--- Printing general country info for the following countries of interest: {', '.join(country_names)} (to update or change this list, go to 'docker compose' - service 'app_base' environment) ---")
+            print(f"\n--- Printing country info for the following countries of interest: {', '.join(country_names)} (to update or change this list, go to 'docker compose' - service 'app_base' environment) ---")
 
             self.cursor.execute("SELECT * FROM country_general_info WHERE country_name ILIKE ANY(%s) ORDER BY country_name;", (country_names,))
             country_rows = self.cursor.fetchall()
@@ -296,7 +308,6 @@ class WorldBankDBPostgres:
 if __name__ == "__main__":
     print("Hello from api_logger!")
     api_data = get_country_general_info()
-    # api_data is a list of the following lists: country_code, country_name, country_income_level, country_capital_city, country_longitude, country_latitude
     wb_db = WorldBankDBPostgres()
     wb_db.add_data_to_db(api_data)
 
