@@ -13,12 +13,14 @@ headers_default = {
     )
 }
 
+#######################################
 # website: Transparency International
 # data: Corruption Perceptions Index
+#######################################
 
 # official URL of all countries' 2024 corruption perceptions indices on the Transparency International website
 # sitemap_url = "https://www.transparency.org/en/sitemaps-1-section-country-1-sitemap.xml"
-# This site blocks scraping so I've switched to Wikipedia instead:
+# This site blocks scraping, so I've switched to Wikipedia instead:
 wiki_url = "https://en.wikipedia.org/wiki/List_of_countries_by_Corruption_Perceptions_Index"
 
 def avoid_index_error(row_data, index):
@@ -192,7 +194,15 @@ def transform_data(table_to_be_transformed):
     print(f"\n--------------- Finished transforming the table! ₍^. .^₎Ⳋ -----------------\n")
     return transformed_df
 
+#######################################
+# website:
+# data: World Happiness
+#######################################
 
+
+#######################################
+# Run the web crawlers
+#######################################
 if __name__ == "__main__":
     print("Hello from web_logger!")
     dfs = scrape_country_cpi_tables()

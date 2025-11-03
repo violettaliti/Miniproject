@@ -9,8 +9,11 @@ from decimal import Decimal # part of python standard library
 from datetime import datetime # part of python standard library
 from pathlib import Path # part of python standard library
 import pandas as pd
+import numpy as np
 
-#### API requests
+#######################################
+# API: World Bank
+#######################################
 # Full list of World Bank ISO2 codes for countries in Europe
 europe_countries_codes = [
     "AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IS","IE",
@@ -18,66 +21,45 @@ europe_countries_codes = [
     "GB","AL","BA","RS","MK","ME","XK","UA","MD","BY"
 ]
 
-def get_European_country_general_info():
+def get_country_general_info():
     try:
-        url = "https://api.worldbank.org/v2/country/AT;BE;BG;HR;CY;CZ;DK;EE;FI;FR;DE;GR;HU;IS;IE;IT;LV;LT;LU;MT;NL;NO;PL;PT;RO;SK;SI;ES;SE;CH;GB;AL;BA;RS;MK;ME;XK;UA;MD;BY?format=json"
+        url = "https://api.worldbank.org/v2/country/?per_page=20000&format=json"
         response = requests.get(url, timeout=5)
         print("\nQueried URL:", response.url, "\n")
 
         if response.status_code == 200:
-            country_info = response.json()
-            # print(country_info)
+            print("....API request approved! Collecting data.... (•˕•マ.ᐟ \n")
+            country_info = response.json()[1] # exclude the metadata info
+            filtered_country_info = [country for country in country_info if country["region"]["value"] != "Aggregates"]
 
-            country_iso3code_all = []
-            country_iso2code_all = []
-            country_name_all = []
-            country_income_level_all = []
-            country_capital_city_all = []
-            country_longitude_all = []
-            country_latitude_all = []
+            country_info_df = pd.DataFrame([
+                {
+                    "country_iso3code": country_dict.get("id"),
+                    "country_iso2code": country_dict.get("iso2Code"),
+                    "country_name": country_dict.get("name"),
+                    "region_name": country_dict.get("region", {}).get("value"),
+                    "region_id": country_dict.get("region", {}).get("id"),
+                    "region_iso2code": country_dict.get("region", {}).get("iso2code"),
+                    "country_income_level": country_dict.get("incomeLevel", {}).get("value"),
+                    "country_capital_city": country_dict.get("capitalCity"),
+                    "country_longitude": float(country_dict.get("longitude")) if country_dict.get(
+                        "longitude") else None,
+                    "country_latitude": float(country_dict.get("latitude")) if country_dict.get("latitude") else None
+                }
+                for country_dict in filtered_country_info
+            ])
 
-            for country_dict in country_info[1]:
-                country_iso3code = country_dict["id"]
-                country_iso3code_all.append(country_iso3code)
+            print("Country info df shape:", country_info_df.shape)
+            print("\nFirst five rows of the country info df:\n", country_info_df.head())
+            print("\nDescription of the country info df:\n", country_info_df.describe(), "\n")
+            print(country_info_df.info())
+            print("\n---- Finish collecting data! ᓚ₍⑅^..^₎♡ ----\n")
 
-                country_iso2code = country_dict["iso2Code"]
-                country_iso2code_all.append(country_iso2code)
+            # turn the df into a list of tuples for saving into the db later
+            country_info_db = country_info_df.replace({np.nan: None}) # replace NaN with None for PostgreSQL
+            country_rows = list(country_info_db.itertuples(index=False, name=None)) # convert to list of tuples in correct column order
 
-                country_name = country_dict["name"]
-                country_name_all.append(country_name)
-
-                country_income_level = country_dict["incomeLevel"]["value"]
-                country_income_level_all.append(country_income_level)
-
-                country_capital_city = country_dict["capitalCity"]
-                country_capital_city_all.append(country_capital_city)
-
-                country_longitude = country_dict["longitude"]
-                country_longitude_all.append(float(country_longitude))
-
-                country_latitude = country_dict["latitude"]
-                country_latitude_all.append(float(country_latitude))
-
-            print("....Collecting data.... (•˕•マ.ᐟ \n")
-            print(f"List of country iso3codes:\n{country_iso3code_all}\n")
-            print(f"List of country iso2codes:\n{country_iso2code_all}\n")
-            print(f"List of country names:\n{country_name_all}\n")
-            print(f"List of country income levels:\n{country_income_level_all}\n")
-            print(f"List of country capital city:\n{country_capital_city_all}\n")
-            print(f"List of country longitude:\n{country_longitude_all}\n")
-            print(f"List of country latitude:\n{country_latitude_all}\n")
-            print("---- Finish collecting data! ᓚ₍⑅^..^₎♡ ----\n")
-
-            rows = list(zip( # zip() transposes a list of columns into a list of rows, suitable for INSERT query later (to add the data to db)
-                country_iso3code_all,
-                country_iso2code_all,
-                country_name_all,
-                country_income_level_all,
-                country_capital_city_all,
-                country_longitude_all,
-                country_latitude_all))
-
-            return rows
+            return country_rows
         else:
             print(f"Something went wrong, I couldn't fetch the requested data /ᐠ-˕-マ. Error status code: {response.status_code}.")
 
@@ -85,31 +67,6 @@ def get_European_country_general_info():
         print(f"Something went wrong ૮₍•᷄  ༝ •᷅₎ა --> Error message: {type(e).__name__} - {e}.")
 
 """
-# working in progress
-
-def get_corruption_info():
-    try:
-        url = "https://api.worldbank.org/v2/country/AT;BE;BG;HR;CY;CZ;DK;EE;FI;FR;DE;GR;HU;IS;IE;IT;LV;LT;LU;MT;NL;NO;PL;PT;RO;SK;SI;ES;SE;CH;GB;AL;BA;RS;MK;ME;XK;UA;MD;BY/indicators/CC.EST?format=json"
-        response = requests.get(url, timeout=5)
-        print("\nQueried URL:", response.url, "\n")
-
-        if response.status_code == 200:
-            corruption_info = response.json()
-            print(corruption_info)
-
-            for country_dict in corruption_info[1]:
-                country_id = country_dict["country"]["id"]
-                country_name = country_dict["country"]["value"]
-
-        else:
-                print(f"Something went wrong, I couldn't fetch the requested data /ᐠ-˕-マ. Error status code: {response.status_code}.")
-
-    except requests.exceptions.RequestException as e:
-        print(f"Something went wrong ૮₍•᷄  ༝ •᷅₎ა --> Error message: {type(e).__name__} - {e}.")
-
-get_corruption_info()
-"""
-
 indicators = [
     "NY.GDP.MKTP.KD.ZG",  # GDP growth (annual %)
     "FP.CPI.TOTL.ZG",     # Inflation, consumer prices (annual %)
@@ -142,9 +99,11 @@ def test():
 
     except requests.exceptions.RequestException as e:
         print(f"Something went wrong ૮₍•᷄  ༝ •᷅₎ა --> Error message: {type(e).__name__} - {e}.")
+"""
 
-
-#### Saving / persisting to db
+#######################################
+# Save / persist to db
+#######################################
 class DatabaseError(Exception):
     pass
 
@@ -200,36 +159,45 @@ class WorldBankDBPostgres:
         except (Exception, psycopg.DatabaseError) as e:
             raise DatabaseError(f"Something went wrong with dropping the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
 
-    def add_data_to_db(self, data: list = None, table_name: str = "european_country_general_info"):
+    def add_data_to_db(self, data: list = None, table_name: str = "country_general_info"):
         if not data:
             print("There is no data to add to the database. /ᐠ-˕-マ")
             return
 
         query = sql.SQL("""
-                        INSERT INTO {} (country_iso3code, country_iso2code, country_name, country_income_level, country_capital_city,
+                        INSERT INTO {} (country_iso3code, country_iso2code, country_name, region_name, region_id, region_iso2code, country_income_level, country_capital_city,
                                         country_longitude, country_latitude)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         ON CONFLICT (country_iso3code) 
                         DO UPDATE SET
                             country_iso2code = EXCLUDED.country_iso2code,
                             country_name = EXCLUDED.country_name,
+                            region_name = EXCLUDED.region_name,
+                            region_id = EXCLUDED.region_id,
+                            region_iso2code = EXCLUDED.region_iso2code,
                             country_income_level = EXCLUDED.country_income_level,
                             country_capital_city = EXCLUDED.country_capital_city,
                             country_longitude = EXCLUDED.country_longitude,
                             country_latitude = EXCLUDED.country_latitude,
                             data_source = 'WorldBank API',
-                            update_count = european_country_general_info.update_count + 1,
+                            update_count = country_general_info.update_count + 1,
                             last_updated = NOW()
                         WHERE
-                            (european_country_general_info.country_iso2code,
-                            european_country_general_info.country_name,
-                            european_country_general_info.country_income_level,
-                            european_country_general_info.country_capital_city,
-                            european_country_general_info.country_longitude,
-                            european_country_general_info.country_latitude)
+                            (country_general_info.country_iso2code,
+                            country_general_info.country_name,
+                            country_general_info.region_name,
+                            country_general_info.region_id,
+                            country_general_info.region_iso2code,
+                            country_general_info.country_income_level,
+                            country_general_info.country_capital_city,
+                            country_general_info.country_longitude,
+                            country_general_info.country_latitude)
                         IS DISTINCT FROM
                             (EXCLUDED.country_iso2code,
                             EXCLUDED.country_name,
+                            EXCLUDED.region_name,
+                            EXCLUDED.region_id,
+                            EXCLUDED.region_iso2code,
                             EXCLUDED.country_income_level,
                             EXCLUDED.country_capital_city,
                             EXCLUDED.country_longitude,
@@ -254,7 +222,7 @@ class WorldBankDBPostgres:
         fetch and display all countries' general info
         """
         try:
-            self.cursor.execute("SELECT * FROM european_country_general_info ORDER BY country_iso3code")
+            self.cursor.execute("SELECT * FROM country_general_info ORDER BY country_iso3code")
             all_countries_rows = self.cursor.fetchall()
             if not all_countries_rows:
                 print(f"No country info available for {self}.")
@@ -293,7 +261,7 @@ class WorldBankDBPostgres:
 
             print(f"\n--- Printing general country info for the following countries of interest: {', '.join(country_names)} (to update or change this list, go to 'docker compose' - service 'app_base' environment) ---")
 
-            self.cursor.execute("SELECT * FROM european_country_general_info WHERE country_name ILIKE ANY(%s) ORDER BY country_name;", (country_names,))
+            self.cursor.execute("SELECT * FROM country_general_info WHERE country_name ILIKE ANY(%s) ORDER BY country_name;", (country_names,))
             country_rows = self.cursor.fetchall()
             if not country_rows:
                 print(f"No country info found for: {', '.join(country_names)}.")
@@ -322,9 +290,12 @@ class WorldBankDBPostgres:
         except (Exception, psycopg.DatabaseError) as e:
             raise DatabaseError(f"Something went wrong with closing the connection. Error type: {type(e).__name__}, error message: '{e}'.")
 
+#######################################
+# Run the API requests
+#######################################
 if __name__ == "__main__":
     print("Hello from api_logger!")
-    api_data = get_European_country_general_info()
+    api_data = get_country_general_info()
     # api_data is a list of the following lists: country_code, country_name, country_income_level, country_capital_city, country_longitude, country_latitude
     wb_db = WorldBankDBPostgres()
     wb_db.add_data_to_db(api_data)
@@ -340,8 +311,6 @@ if __name__ == "__main__":
         wb_db.get_country_info(names)
     else:
         print("\n--- Printing general country info for the countries of interest: No info about countries of interest was given ^. .^₎⟆ ---")
-
-    test()
 
     wb_db.close_connection()
 
