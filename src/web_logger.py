@@ -193,12 +193,6 @@ def transform_and_clean_data(table_to_be_transformed):
     transformed_df["Year"] = transformed_df["Year"].astype(int)
     transformed_df["CPI Score"] = transformed_df["CPI Score"].astype(float)
 
-    # sanity check
-    os.makedirs("data", exist_ok = True)  # creates data/ if it doesn’t exist
-    csv_path = "data/cpi_transformed.csv"
-    transformed_df.to_csv(csv_path, index = False, encoding = "utf-8")
-    print(f"Saved transformed (not cleaned - so NaNs included) CPI data to {csv_path}.\n")
-
     # corrections (due to the wiki table formats, the following info were skipped):
     corrections = [
         {"Country": "Brunei Darussalam", "Year": 2022, "CPI Score": None},
@@ -319,6 +313,12 @@ def transform_and_clean_data(table_to_be_transformed):
         fixed_df["CPI Score"] # otherwise keep the scraped one
     )
     fixed_df = fixed_df.drop(columns = ["CPI Score_corr"])
+
+    # sanity check
+    os.makedirs("data", exist_ok = True)  # creates data/ if it doesn’t exist
+    csv_path = "data/cpi_fixed_transformed.csv"
+    fixed_df.to_csv(csv_path, index = False, encoding = "utf-8")
+    print(f"Saved fixed and transformed (not cleaned - so NaNs included) CPI data to {csv_path}.\n")
 
     # drop NaN scores (so that the data saved into db is cleaned)
     transformed_cleaned_df = fixed_df.dropna(subset = ["CPI Score"])
