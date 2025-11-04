@@ -52,7 +52,8 @@ CREATE TABLE IF NOT EXISTS thi_miniproject.country_general_info(
 CREATE TABLE IF NOT EXISTS thi_miniproject.staging_cpi_raw(
 	country_name TEXT NOT NULL,
 	year INTEGER NOT NULL,
-	cpi_score NUMERIC(5, 2) CHECK (cpi_score BETWEEN 0 AND 100)
+	cpi_score NUMERIC(5, 2) CHECK (cpi_score BETWEEN 0 AND 100),
+	CONSTRAINT country_year_unique_check UNIQUE (country_name, year)
 );
 
 -- final corruption perception index (CPI) table

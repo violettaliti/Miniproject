@@ -2,7 +2,7 @@
 import os # part of python standard library -> no need to add to requirements.txt
 import requests
 import psycopg
-import time # part of python standard library -> no need to add to requirements.txt
+import time # part of python standard library
 from psycopg import sql
 from dotenv import load_dotenv
 from decimal import Decimal # part of python standard library

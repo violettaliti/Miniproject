@@ -9,6 +9,7 @@ import os # part of python standard library
 import psycopg
 from psycopg import sql
 from dotenv import load_dotenv
+import time # part of python standard library
 
 # my web crawler identity
 headers_default = {
@@ -106,17 +107,34 @@ def scrape_country_cpi_tables(url = wiki_url, headers = headers_default):
                     data = {"Country": country_name}
 
                     # year cells: take bold text only
-                    for year_index, year in enumerate(years):
-                        cell_index = 2 + (year_index * 2)
-                        # get the <td> cell safely
-                        td = row_data[cell_index] if cell_index < len(row_data) else None
-
-                        # check that the cell contains a <b> tag (bold)
-                        if isinstance(td, Tag):
-                            bold = td.select_one("b, strong")
-                            data[year] = bold.get_text(strip = True) if bold else None
+                    # for year_index, year in enumerate(years):
+                    #     cell_index = 2 + (year_index * 2)
+                    #     # get the <td> cell safely
+                    #     td = row_data[cell_index] if cell_index < len(row_data) else None
+                    #
+                    #     # check that the cell contains a <b> tag (bold)
+                    #     if isinstance(td, Tag):
+                    #         bold = td.select_one("b, strong")
+                    #         data[year] = bold.get_text(strip = True) if bold else None
+                    #     else:
+                    #         # no <b> tag -> skip or set as None
+                    #         data[year] = None
+                    print(f"{country_name=}")
+                    current_year_index = 0
+                    skip_next = False
+                    for col_count, col in enumerate(row_data):
+                        if col_count < 2 or skip_next:
+                            skip_next = False
+                            continue
+                        col_text = col.get_text()
+                        if col_text != "—\n":
+                            year = years[current_year_index]
+                            current_year_index += 1
+                            data[year] = col_text
+                            skip_next = True
                         else:
-                            # no <b> tag -> skip or set as None
+                            year = years[current_year_index]
+                            current_year_index += 1
                             data[year] = None
 
                     # only append if the row has some valid year data
@@ -190,138 +208,18 @@ def transform_and_clean_data(table_to_be_transformed):
         var_name = "Year", # name of the new column for the former headers (e.g. 1995, 2024)
         value_name = "CPI Score" # name of the new column for the old values (cpi scores)
     )
-    transformed_df["Year"] = transformed_df["Year"].astype(int)
-    transformed_df["CPI Score"] = transformed_df["CPI Score"].astype(float)
-
-    # corrections (due to the wiki table formats, the following info were skipped):
-    corrections = [
-        {"Country": "Brunei Darussalam", "Year": 2022, "CPI Score": None},
-        {"Country": "Brunei Darussalam", "Year": 2020, "CPI Score": 60.0},
-        {"Country": "Seychelles", "Year": 2015, "CPI Score": 55.0},
-        {"Country": "Seychelles", "Year": 2014, "CPI Score": 55.0},
-        {"Country": "Seychelles", "Year": 2013, "CPI Score": 54.0},
-        {"Country": "Seychelles", "Year": 2012, "CPI Score": 52.0},
-        {"Country": "Bahamas", "Year": 2014, "CPI Score": 71.0},
-        {"Country": "Bahamas", "Year": 2013, "CPI Score": 71.0},
-        {"Country": "Bahamas", "Year": 2012, "CPI Score": 71.0},
-        {"Country": "Barbados", "Year": 2014, "CPI Score": 74.0},
-        {"Country": "Barbados", "Year": 2013, "CPI Score": 75.0},
-        {"Country": "Barbados", "Year": 2012, "CPI Score": 76.0},
-        {"Country": "Brunei Darussalam", "Year": 2013, "CPI Score": 60.0},
-        {"Country": "Brunei Darussalam", "Year": 2012, "CPI Score": 55.0},
-        {"Country": "Saint Vincent and the Grenadines", "Year": 2014, "CPI Score": 62.0},
-        {"Country": "Saint Vincent and the Grenadines", "Year": 2013, "CPI Score": 62.0},
-        {"Country": "Saint Vincent and the Grenadines", "Year": 2012, "CPI Score": 62.0},
-        {"Country": "Saint Lucia", "Year": 2014, "CPI Score": 71.0},
-        {"Country": "Saint Lucia", "Year": 2013, "CPI Score": 71.0},
-        {"Country": "Saint Lucia", "Year": 2012, "CPI Score": 71.0},
-        {"Country": "Dominica", "Year": 2014, "CPI Score": 58.0},
-        {"Country": "Dominica", "Year": 2013, "CPI Score": 58.0},
-        {"Country": "Dominica", "Year": 2012, "CPI Score": 58.0},
-        {"Country": "Eswatini", "Year": 2014, "CPI Score": 43.0},
-        {"Country": "Eswatini", "Year": 2013, "CPI Score": 39.0},
-        {"Country": "Eswatini", "Year": 2012, "CPI Score": 37.0},
-        {"Country": "Equatorial Guinea", "Year": 2013, "CPI Score": 19.0},
-        {"Country": "Equatorial Guinea", "Year": 2012, "CPI Score": 20.0},
-        {"Country": "Saint Lucia", "Year": 2009, "CPI Score": 70.0},
-        {"Country": "Saint Lucia", "Year": 2008, "CPI Score": 71.0},
-        {"Country": "Saint Lucia", "Year": 2007, "CPI Score": 68.0},
-        {"Country": "Saint Vincent and the Grenadines", "Year": 2009, "CPI Score": 64.0},
-        {"Country": "Saint Vincent and the Grenadines", "Year": 2008, "CPI Score": 65.0},
-        {"Country": "Saint Vincent and the Grenadines", "Year": 2007, "CPI Score": 61.0},
-        {"Country": "Fiji", "Year": 2005, "CPI Score": 40.0},
-        {"Country": "Grenada", "Year": 2007, "CPI Score": 34.0},
-        {"Country": "Grenada", "Year": 2006, "CPI Score": 35.0},
-        {"Country": "Liberia", "Year": 2005, "CPI Score": 22.0},
-        {"Country": "Suriname", "Year": 2009, "CPI Score": 37.0},
-        {"Country": "Suriname", "Year": 2008, "CPI Score": 36.0},
-        {"Country": "Suriname", "Year": 2007, "CPI Score": 35.0},
-        {"Country": "Suriname", "Year": 2006, "CPI Score": 30.0},
-        {"Country": "Suriname", "Year": 2005, "CPI Score": 32.0},
-        {"Country": "Suriname", "Year": 2004, "CPI Score": 43.0},
-        {"Country": "Belize", "Year": 2008, "CPI Score": 29.0},
-        {"Country": "Belize", "Year": 2007, "CPI Score": 30.0},
-        {"Country": "Belize", "Year": 2006, "CPI Score": 35.0},
-        {"Country": "Belize", "Year": 2005, "CPI Score": 37.0},
-        {"Country": "Belize", "Year": 2004, "CPI Score": 38.0},
-        {"Country": "Belize", "Year": 2003, "CPI Score": 45.0},
-        {"Country": "Serbia and Montenegro", "Year": 2005, "CPI Score": 28.0},
-        {"Country": "Serbia and Montenegro", "Year": 2004, "CPI Score": 27.0},
-        {"Country": "Serbia and Montenegro", "Year": 2003, "CPI Score": 23.0},
-        {"Country": "Palestine", "Year": 2005, "CPI Score": 26.0},
-        {"Country": "Palestine", "Year": 2004, "CPI Score": 25.0},
-        {"Country": "Palestine", "Year": 2003, "CPI Score": 30.0},
-        {"Country": "Afghanistan", "Year": 2005, "CPI Score": 25.0},
-        {"Country": "Somalia", "Year": 2005, "CPI Score": 21.0},
-        {"Country": "Uruguay", "Year": 1999, "CPI Score": 44.0},
-        {"Country": "Uruguay", "Year": 1998, "CPI Score": 43.0},
-        {"Country": "Hungary", "Year": 1999, "CPI Score": 52.0},
-        {"Country": "Hungary", "Year": 1998, "CPI Score": 50.0},
-        {"Country": "Belarus", "Year": 2000, "CPI Score": 41.0},
-        {"Country": "Belarus", "Year": 1999, "CPI Score": 34.0},
-        {"Country": "Belarus", "Year": 1998, "CPI Score": 39.0},
-        {"Country": "Mongolia", "Year": 1999, "CPI Score": 43.0},
-        {"Country": "Jamaica", "Year": 1999, "CPI Score": 38.0},
-        {"Country": "Jamaica", "Year": 1998, "CPI Score": 38.0},
-        {"Country": "Morocco", "Year": 2000, "CPI Score": 47.0},
-        {"Country": "Morocco", "Year": 1999, "CPI Score": 41.0},
-        {"Country": "Morocco", "Year": 1998, "CPI Score": 37.0},
-        {"Country": "Ethiopia", "Year": 2000, "CPI Score": 32.0},
-        {"Country": "FYR Macedonia", "Year": 1999, "CPI Score": 33.0},
-        {"Country": "Honduras", "Year": 1999, "CPI Score": 18.0},
-        {"Country": "Honduras", "Year": 1998, "CPI Score": 17.0},
-        {"Country": "Burkina Faso", "Year": 2000, "CPI Score": 30.0},
-        {"Country": "Pakistan", "Year": 1999, "CPI Score": 22.0},
-        {"Country": "Pakistan", "Year": 1998, "CPI Score": 27.0},
-        {"Country": "Nicaragua", "Year": 1999, "CPI Score": 31.0},
-        {"Country": "Nicaragua", "Year": 1998, "CPI Score": 30.0},
-        {"Country": "Guatemala", "Year": 1999, "CPI Score": 32.0},
-        {"Country": "Guatemala", "Year": 1998, "CPI Score": 31.0},
-        {"Country": "Albania", "Year": 1999, "CPI Score": 23.0},
-        {"Country": "Georgia", "Year": 1999, "CPI Score": 23.0},
-        {"Country": "Armenia", "Year": 2000, "CPI Score": 25.0},
-        {"Country": "Armenia", "Year": 1999, "CPI Score": 25.0},
-        {"Country": "Kyrgyz Republic", "Year": 1999, "CPI Score": 22.0},
-        {"Country": "Mozambique", "Year": 2000, "CPI Score": 22.0},
-        {"Country": "Mozambique", "Year": 1999, "CPI Score": 35.0},
-        {"Country": "Paraguay", "Year": 1999, "CPI Score": 20.0},
-        {"Country": "Paraguay", "Year": 1998, "CPI Score": 15.0},
-        {"Country": "Angola", "Year": 2000, "CPI Score": 17.0},
-        {"Country": "FR Yugoslavia", "Year": 2000, "CPI Score": 13.0},
-        {"Country": "FR Yugoslavia", "Year": 1999, "CPI Score": 20.0},
-        {"Country": "FR Yugoslavia", "Year": 1998, "CPI Score": 30.0},
-        {"Country": "Jordan", "Year": 1996, "CPI Score": 48.9},
-        {"Country": "Ecuador", "Year": 1996, "CPI Score": 31.9},
-        {"Country": "Egypt", "Year": 1996, "CPI Score": 28.4},
-        {"Country": "Uganda", "Year": 1996, "CPI Score": 27.1},
-        {"Country": "Cameroon", "Year": 1996, "CPI Score": 24.6},
-        {"Country": "Bangladesh", "Year": 1996, "CPI Score": 22.9},
-        {"Country": "Kenya", "Year": 1996, "CPI Score": 22.1}
-    ]
-    corrections_df = pd.DataFrame(corrections)
-
     # enforce types
-    transformed_df["Country"] = transformed_df["Country"].str.strip()
     transformed_df["Year"] = transformed_df["Year"].astype(int)
-    transformed_df["CPI Score"] = transformed_df["CPI Score"].astype(float)
-
-    # left-join corrections and overwrite cpi scores where provided
-    fixed_df = transformed_df.merge(corrections_df, on = ["Country", "Year"], how = "left", suffixes = ("", "_corr"))
-    # overwrite scraped scores with correction values when available
-    fixed_df["CPI Score"] = fixed_df["CPI Score_corr"].where(
-        fixed_df["CPI Score_corr"].notna(), # take correction when it's not NaN
-        fixed_df["CPI Score"] # otherwise keep the scraped one
-    )
-    fixed_df = fixed_df.drop(columns = ["CPI Score_corr"])
+    transformed_df["Country"] = transformed_df["Country"].str.strip()
 
     # sanity check
-    os.makedirs("data", exist_ok = True)  # creates data/ if it doesn’t exist
-    csv_path = "data/cpi_fixed_transformed.csv"
-    fixed_df.to_csv(csv_path, index = False, encoding = "utf-8")
-    print(f"Saved fixed and transformed (not cleaned - so NaNs included) CPI data to {csv_path}.\n")
+    # os.makedirs("data", exist_ok = True)  # creates data/ if it doesn’t exist
+    # csv_path = "data/cpi_fixed_transformed.csv"
+    # transformed_df.to_csv(csv_path, index = False, encoding = "utf-8")
+    # print(f"Saved transformed (not cleaned - so NaNs included) CPI data to {csv_path}.\n")
 
     # drop NaN scores (so that the data saved into db is cleaned)
-    transformed_cleaned_df = fixed_df.dropna(subset = ["CPI Score"])
+    transformed_cleaned_df = transformed_df.dropna(subset = ["CPI Score"])
 
     print(f"The first 5 rows of the cleaned, transformed, 3NF-compliant table (NaNs removed):\n\n", transformed_cleaned_df.head(5), "\n")
     print("The cleaned, transformed table description:\n\n", transformed_cleaned_df.describe())
@@ -401,7 +299,8 @@ class WorldBankDBPostgres:
 
         query = sql.SQL("""
                         INSERT INTO {} (country_name, year, cpi_score)
-                        VALUES (%s, %s, %s);
+                        VALUES (%s, %s, %s)
+                        ON CONFLICT (country_name, year) DO NOTHING;
                         """).format(sql.Identifier(table_name))
         # on conflict do nothing to prevent throwing errors and creating duplicates
 
