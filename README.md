@@ -25,10 +25,9 @@ To carry out a mini project and datapipeline using `APIs`, `web scraping`, `Dock
   - [ ] Extend API requests - 2
   - [ ] Extend API requests - 3
 - [ ] Scrape complementary data from `websites` ❯❯ see the list below
-  - [ ] Web scraper prototype
+  - [X] Web scraper prototype
   - [ ] Extend data sources for web scraping - 1
   - [ ] Extend data sources for web scraping - 2
-  - [ ] Extend data sources for web scraping - 3
 - [ ] Store the acquired data in `PostgreSQL` ❯❯ `pgAdmin4` 
   - [X] Database prototype
   - [X] Initial relational database schema
