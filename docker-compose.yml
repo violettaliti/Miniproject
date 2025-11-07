@@ -18,7 +18,7 @@ services:
       START_YEAR_OF_INTEREST: 2000
       END_YEAR_OF_INTEREST: 2024
       # change the following var to true/yes/1 if you want all countries' general info to be displayed
-      DISPLAY_ALL_COUNTRIES_INFO: false
+      DISPLAY_ALL_EU_COUNTRIES_INFO: false
     networks:
       - miniproject_network
 
