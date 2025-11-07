@@ -90,7 +90,6 @@ CREATE TABLE IF NOT EXISTS thi_miniproject.staging_cpi_raw(
 -- final corruption perception index (CPI) table
 CREATE TABLE IF NOT EXISTS thi_miniproject.corruption_perception_index(
 	country_iso3code TEXT REFERENCES country_general_info(country_iso3code),
-	country_name TEXT NOT NULL,
 	year INTEGER NOT NULL REFERENCES year(year),
 	cpi_score NUMERIC(5, 2) CHECK (cpi_score BETWEEN 0 AND 100),
 	PRIMARY KEY(country_iso3code, year)
@@ -133,12 +132,11 @@ BEGIN
 
     -- 4) upsert into final CPI table (idempotent)
     INSERT INTO thi_miniproject.corruption_perception_index
-           (country_iso3code, country_name, year, cpi_score)
-    VALUES (c_iso3, NEW.country_name, NEW.year, NEW.cpi_score)
+           (country_iso3code, year, cpi_score)
+    VALUES (c_iso3, NEW.year, NEW.cpi_score)
     ON CONFLICT (country_iso3code, year)
     DO UPDATE SET
-        cpi_score = EXCLUDED.cpi_score,
-        country_name = EXCLUDED.country_name;
+        cpi_score = EXCLUDED.cpi_score;
 
     RETURN NEW; -- keep the staging row as audit trail
 END;
@@ -154,3 +152,36 @@ CREATE TRIGGER trg_staging_cpi_to_final
 AFTER INSERT ON thi_miniproject.staging_cpi_raw
 FOR EACH ROW
 EXECUTE FUNCTION thi_miniproject.staging_cpi_to_final();
+
+----------------------------------------------------------
+-- Views
+----------------------------------------------------------
+-- CPI with country + region info 
+CREATE OR REPLACE VIEW thi_miniproject.v_cpi_with_region AS
+SELECT
+  cpi.country_iso3code,
+  cgi.country_iso2code,
+  cgi.country_name,
+  r.region_id,
+  r.region_iso2code,
+  r.region_name,
+  cpi.year,
+  cpi.cpi_score
+FROM thi_miniproject.corruption_perception_index AS cpi
+JOIN thi_miniproject.country_general_info AS cgi
+	USING (country_iso3code)
+LEFT JOIN thi_miniproject.region AS r
+	ON r.region_id = cgi.region_id;
+
+-- latest CPI per country (one row per country)
+CREATE OR REPLACE VIEW thi_miniproject.v_cpi_latest AS
+SELECT DISTINCT ON (cpi.country_iso3code)
+  cpi.country_iso3code,
+  cgi.country_iso2code,
+  cgi.country_name,
+  cpi.year,
+  cpi.cpi_score
+FROM thi_miniproject.corruption_perception_index AS cpi
+JOIN thi_miniproject.country_general_info AS cgi
+	USING (country_iso3code)
+ORDER BY cpi.country_iso3code, cpi.year DESC;  
