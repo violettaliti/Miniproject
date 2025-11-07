@@ -399,7 +399,6 @@ if __name__ == "__main__":
 
     print("Adding additional country aliases...")
     other_country_aliases = [
-        ('FRY Macedonia', 'MKD'),
         ('Macedonia', 'MKD'),
         ('Czech Republic', 'CZE'),
         ('Czechia', 'CZE'),
@@ -408,8 +407,39 @@ if __name__ == "__main__":
         ('UK', 'GBR'),
         ('Russian Federation', 'RUS'),
         ('Russia', 'RUS'),
-        ('Kosovo', 'XKX')
+        ('Kosovo', 'XKX'),
+        ('Turkiye', 'TUR'),
+        ('Hong Kong', 'HKG'),
+        ("Venezuela", "VEN"),
+        ("South Korea", "KOR"),
+        ("Vietnam", "VNM"),
+        ("Egypt", "EGY"),
+        ("Ivory Coast", "CIV"),
+        ("Slovakia", "SVK"),
+        ("Yemen", "YEM"),
+        ("Gambia", "GMB"),
+        ("Iran", "IRN"),
+        ("Kyrgyzstan", "KGZ"),
+        ("Syria", "SYR"),
+        ("Democratic Republic of the Congo", "COD"),
+        ("Laos", "LAO"),
+        ("Somalia", "SOM"),
+        ("Cape Verde", "CPV"),
+        ("Republic of the Congo", "COG"),
+        ("Saint Lucia", "LCA"),
+        ("Saint Vincent and the Grenadines", "VCT"),
+        ("North Korea", "PRK"),
+        ("Bahamas", "BHS"),
+        ("FYR Macedonia", "MKD"),
+        ("Guinea Bissau", "GNB"),
+        ("Swaziland", "SWZ"),
+        ("Timor Leste", "TLS"),
+        ("Macau", "MAC"),
+        ("Congo", "COG"),
+        ("Puerto Rico", "PRI"),
+        ("Palestine", "PSE")
     ]
+    # unresolved: ("Serbia and Montenegro", ""), ("Taiwan", "TWN"), ("FR Yugoslavia", "YUG"), and ("Congo", "COG / COD")
     wb_db.add_data_to_country_alias_table(other_country_aliases)
 
     wb_db.close_connection()
