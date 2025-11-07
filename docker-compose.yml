@@ -9,13 +9,16 @@ services:
     env_file:
       - .env
     environment:
-      DB_HOST: db # use 'db' inside docker container, 'localhost' outside (e.g. in locally installed apps such as pgAdmin) - here it's for inside the container so it's hardcoded with 'db'.
+      DB_HOST: db # use 'db' inside docker container, 'localhost' outside (e.g. in locally installed apps such as pgAdmin) - here it's for inside the container so it's hardcoded with 'db'
       DB_PORT: 5432 # use 5555 for locally installed apps such as pgAdmin, 5432 for inside the docker container
-      DB_NAME: ${POSTGRES_DB:-worldbank} # ${VAR:-default}: use the var from .env if available, otherwise use this default value.
+      DB_NAME: ${POSTGRES_DB:-worldbank} # ${VAR:-default}: use the var from .env if available, otherwise use this default value
       DB_USER: ${POSTGRES_USER:-user}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-katzi}
       # replace the following var with names of the european countries of interest
       COUNTRIES_OF_INTEREST: Austria, Germany
+      # replace the following vars with the start year and end year of interest (both years inclusive) - available years for CPI scores: between 1995 and 2024
+      START_YEAR_OF_INTEREST: 2000
+      END_YEAR_OF_INTEREST: 2024
       # change the following var to true/yes/1 if you want all countries' general info to be displayed
       DISPLAY_ALL_COUNTRIES_INFO: false
     networks:
