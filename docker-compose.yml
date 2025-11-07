@@ -65,4 +65,3 @@ services:
 networks:
   miniproject_network: # so that I don't have to go through the host for the services' connection anymore
     driver: bridge
-
