@@ -417,6 +417,7 @@ if __name__ == "__main__":
         ('Russia', 'RUS'),
         ('Kosovo', 'XKX'),
         ('Turkiye', 'TUR'),
+        ('Turkey', 'TUR'),
         ('Hong Kong', 'HKG'),
         ("Venezuela", "VEN"),
         ("South Korea", "KOR"),
