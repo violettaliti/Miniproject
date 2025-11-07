@@ -3,6 +3,12 @@ CREATE schema IF NOT EXISTS thi_miniproject;
 SET search_path TO thi_miniproject;
 
 ----------------------------------------------------------
+-- General helper
+----------------------------------------------------------
+-- helper for accent-/case-insensitive matches
+CREATE EXTENSION IF NOT EXISTS unaccent; -- activates Postgres’s built-in accent-remover so we can safely compare strings
+
+----------------------------------------------------------
 -- General generic tables
 ----------------------------------------------------------
 -- year (1960 - 2025)
@@ -27,8 +33,8 @@ LANGUAGE plpgsql;
 ----------------------------------------------------------
 -- Tables for data from API requests
 ----------------------------------------------------------
--- country_general_info table
-CREATE TABLE IF NOT EXISTS thi_miniproject.country_general_info(
+-- staging_country_general_info table
+CREATE TABLE IF NOT EXISTS thi_miniproject.staging_country_general_info(
 	country_iso3code TEXT PRIMARY KEY,
     country_iso2code TEXT,
 	country_name TEXT,
@@ -43,6 +49,31 @@ CREATE TABLE IF NOT EXISTS thi_miniproject.country_general_info(
     insert_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     update_count INTEGER NOT NULL DEFAULT 0,
     last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- region table
+CREATE TABLE IF NOT EXISTS thi_miniproject.region(	
+	region_id TEXT PRIMARY KEY,
+	region_iso2code TEXT,
+	region_name TEXT NOT NULL
+);
+
+-- country_general_info table
+CREATE TABLE IF NOT EXISTS thi_miniproject.country_general_info(
+	country_iso3code TEXT PRIMARY KEY,
+    country_iso2code TEXT,
+	country_name TEXT,
+	region_id TEXT NOT NULL REFERENCES thi_miniproject.region(region_id),
+	country_income_level TEXT,
+	country_capital_city TEXT,
+	country_longitude NUMERIC,
+	country_latitude NUMERIC
+);
+
+-- country name alias table
+CREATE TABLE IF NOT EXISTS thi_miniproject.country_alias (
+	country_name_alias TEXT PRIMARY KEY,
+	country_iso3code TEXT NOT NULL REFERENCES thi_miniproject.country_general_info(country_iso3code)
 );
 
 ----------------------------------------------------------
@@ -64,3 +95,62 @@ CREATE TABLE IF NOT EXISTS thi_miniproject.corruption_perception_index(
 	cpi_score NUMERIC(5, 2) CHECK (cpi_score BETWEEN 0 AND 100),
 	PRIMARY KEY(country_iso3code, year)
 );
+
+----------------------------------------------------------
+-- Trigger functions
+----------------------------------------------------------
+CREATE OR REPLACE FUNCTION thi_miniproject.staging_cpi_to_final()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    c_iso3 TEXT;
+BEGIN
+    -- 1) try alias match first
+    SELECT ca.country_iso3code
+      INTO c_iso3
+      FROM thi_miniproject.country_alias AS ca
+     WHERE unaccent(lower(ca.country_name_alias))
+           = unaccent(lower(NEW.country_name))
+     LIMIT 1;
+
+    -- 2) fallback: direct match against wb official country names
+    IF c_iso3 IS NULL THEN
+        SELECT cgi.country_iso3code
+          INTO c_iso3
+          FROM thi_miniproject.country_general_info AS cgi
+         WHERE unaccent(lower(cgi.country_name))
+               = unaccent(lower(NEW.country_name))
+         LIMIT 1;
+    END IF;
+
+    -- 3) if still unknown, just log and keep the staging row
+    IF c_iso3 IS NULL THEN
+        RAISE NOTICE 'No country_iso3code match for "%" (year %); leaving row in staging.',
+                     NEW.country_name, NEW.year;
+        RETURN NEW;
+    END IF;
+
+    -- 4) upsert into final CPI table (idempotent)
+    INSERT INTO thi_miniproject.corruption_perception_index
+           (country_iso3code, country_name, year, cpi_score)
+    VALUES (c_iso3, NEW.country_name, NEW.year, NEW.cpi_score)
+    ON CONFLICT (country_iso3code, year)
+    DO UPDATE SET
+        cpi_score = EXCLUDED.cpi_score,
+        country_name = EXCLUDED.country_name;
+
+    RETURN NEW; -- keep the staging row as audit trail
+END;
+$$;
+
+----------------------------------------------------------
+-- Triggers
+----------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_staging_cpi_to_final
+    ON thi_miniproject.staging_cpi_raw;
+
+CREATE TRIGGER trg_staging_cpi_to_final
+AFTER INSERT ON thi_miniproject.staging_cpi_raw
+FOR EACH ROW
+EXECUTE FUNCTION thi_miniproject.staging_cpi_to_final();
