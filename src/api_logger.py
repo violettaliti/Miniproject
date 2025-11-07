@@ -50,8 +50,7 @@ def get_country_general_info():
                 "region_iso2code": country_dict.get("region", {}).get("iso2code"),
                 "country_income_level": country_dict.get("incomeLevel", {}).get("value"),
                 "country_capital_city": country_dict.get("capitalCity"),
-                "country_longitude": float(country_dict.get("longitude")) if country_dict.get(
-                    "longitude") else None,
+                "country_longitude": float(country_dict.get("longitude")) if country_dict.get("longitude") else None,
                 "country_latitude": float(country_dict.get("latitude")) if country_dict.get("latitude") else None
             }
             for country_dict in filtered_country_info
@@ -124,6 +123,7 @@ class WorldBankDBPostgres:
         password = os.getenv("DB_PASSWORD", os.getenv("POSTGRES_PASSWORD", "katzi"))  # in my .env file, I have a different pw but since it's in .gitignore, we can just use the default pw 'katzi'
         host = os.getenv("DB_HOST", "localhost")  # use 'db' inside docker container, 'localhost' outside (e.g. in locally installed apps such as pgAdmin)
         port = int(os.getenv("DB_PORT", 5555))  # use 5432 for inside the docker container, 5555 for locally installed apps such as pgAdmin
+        print(f".... Connecting to host '{host}' : port '{port}' .....\n")
 
         try:
             self.connection = self.connect_with_retry({
@@ -169,7 +169,7 @@ class WorldBankDBPostgres:
         except (Exception, psycopg.DatabaseError) as e:
             raise DatabaseError(f"Something went wrong with dropping the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
 
-    def add_data_to_db(self, data: list = None, table_name: str = "country_general_info"):
+    def add_data_to_staging_country_general_info_table(self, data: list = None, table_name: str = "staging_country_general_info"):
         """persist acquired data into db"""
         if not data:
             print("There is no data to add to the database. /ᐠ-˕-マ")
@@ -191,18 +191,18 @@ class WorldBankDBPostgres:
                             country_longitude = EXCLUDED.country_longitude,
                             country_latitude = EXCLUDED.country_latitude,
                             data_source = 'WorldBank API',
-                            update_count = country_general_info.update_count + 1,
+                            update_count = staging_country_general_info.update_count + 1,
                             last_updated = NOW()
                         WHERE
-                            (country_general_info.country_iso2code,
-                            country_general_info.country_name,
-                            country_general_info.region_name,
-                            country_general_info.region_id,
-                            country_general_info.region_iso2code,
-                            country_general_info.country_income_level,
-                            country_general_info.country_capital_city,
-                            country_general_info.country_longitude,
-                            country_general_info.country_latitude)
+                            (staging_country_general_info.country_iso2code,
+                            staging_country_general_info.country_name,
+                            staging_country_general_info.region_name,
+                            staging_country_general_info.region_id,
+                            staging_country_general_info.region_iso2code,
+                            staging_country_general_info.country_income_level,
+                            staging_country_general_info.country_capital_city,
+                            staging_country_general_info.country_longitude,
+                            staging_country_general_info.country_latitude)
                         IS DISTINCT FROM
                             (EXCLUDED.country_iso2code,
                             EXCLUDED.country_name,
@@ -225,6 +225,70 @@ class WorldBankDBPostgres:
             self.connection.rollback()
             raise DatabaseError(f"Something went wrong with adding the data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
 
+    def add_data_to_country_general_info_table(self, data: list = None, table_name: str = "country_general_info"):
+        """persist acquired data into db"""
+        if not data:
+            print("There is no data to add to the database. /ᐠ-˕-マ")
+            return
+
+        query = sql.SQL("""
+                        INSERT INTO {} (country_iso3code, country_iso2code, country_name, region_id, country_income_level, country_capital_city,
+                                        country_longitude, country_latitude)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT (country_iso3code) DO NOTHING;
+                        """).format(sql.Identifier(table_name))
+        # on conflict do nothing to prevent throwing errors and creating duplicates
+
+        try:
+            self.cursor.executemany(query.as_string(self.connection), data)
+            self.connection.commit()
+            print(f"Successfully added or updated {len(data)} rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ")
+        except (Exception, psycopg.DatabaseError) as e:
+            self.connection.rollback()
+            raise DatabaseError(f"Something went wrong with adding the data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
+
+    def add_data_to_region_table(self, data: list = None, table_name: str = "region"):
+        """persist acquired data into db"""
+        if not data:
+            print("There is no data to add to the database. /ᐠ-˕-マ")
+            return
+
+        query = sql.SQL("""
+                        INSERT INTO {} (region_id, region_iso2code, region_name)
+                        VALUES (%s, %s, %s)
+                        ON CONFLICT (region_id) DO NOTHING;
+                        """).format(sql.Identifier(table_name))
+        # on conflict do nothing to prevent throwing errors and creating duplicates
+
+        try:
+            self.cursor.executemany(query.as_string(self.connection), data)
+            self.connection.commit()
+            print(f"Successfully added or updated {len(data)} rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ")
+        except (Exception, psycopg.DatabaseError) as e:
+            self.connection.rollback()
+            raise DatabaseError(f"Something went wrong with adding the data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
+
+    def add_data_to_country_alias_table(self, data: list = None, table_name: str = "country_alias"):
+        """persist acquired data into db"""
+        if not data:
+            print("There is no data to add to the database. /ᐠ-˕-マ")
+            return
+
+        query = sql.SQL("""
+                        INSERT INTO {} (country_name_alias, country_iso3code)
+                        VALUES (%s, %s)
+                        ON CONFLICT (country_name_alias) DO NOTHING;
+                        """).format(sql.Identifier(table_name))
+        # on conflict do nothing to prevent throwing errors and creating duplicates
+
+        try:
+            self.cursor.executemany(query.as_string(self.connection), data)
+            self.connection.commit()
+            print(f"Successfully added or updated {len(data)} rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ")
+        except (Exception, psycopg.DatabaseError) as e:
+            self.connection.rollback()
+            raise DatabaseError(f"Something went wrong with adding the data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
+
     def __str__(self):
         """replace the string special method to automatically display the db name"""
         return f"WorldBank PostgreSQL database (schema: thi_miniproject)"
@@ -234,7 +298,7 @@ class WorldBankDBPostgres:
         fetch and display all countries' general info
         """
         try:
-            self.cursor.execute("SELECT * FROM country_general_info ORDER BY country_iso3code")
+            self.cursor.execute("SELECT * FROM staging_country_general_info ORDER BY country_iso3code")
             all_countries_rows = self.cursor.fetchall()
             if not all_countries_rows:
                 print(f"No country info available for {self}.")
@@ -273,7 +337,7 @@ class WorldBankDBPostgres:
 
             print(f"\n--- Printing country info for the following countries of interest: {', '.join(country_names)} (to update or change this list, go to 'docker compose' - service 'app_base' environment) ---")
 
-            self.cursor.execute("SELECT * FROM country_general_info WHERE country_name ILIKE ANY(%s) ORDER BY country_name;", (country_names,))
+            self.cursor.execute("SELECT * FROM staging_country_general_info WHERE country_name ILIKE ANY(%s) ORDER BY country_name;", (country_names,))
             country_rows = self.cursor.fetchall()
             if not country_rows:
                 print(f"No country info found for: {', '.join(country_names)}.")
@@ -309,7 +373,7 @@ if __name__ == "__main__":
     print("Hello from api_logger!")
     api_data = get_country_general_info()
     wb_db = WorldBankDBPostgres()
-    wb_db.add_data_to_db(api_data)
+    wb_db.add_data_to_staging_country_general_info_table(api_data)
 
     display_all = os.getenv("DISPLAY_ALL_COUNTRIES_INFO", "false").strip().lower() in ("1", "true", "yes")
     if display_all:
@@ -322,6 +386,31 @@ if __name__ == "__main__":
         wb_db.get_country_info(names)
     else:
         print("\n--- Printing general country info for the countries of interest: No info about countries of interest was given ^. .^₎⟆ ---")
+
+
+    normalised_api_data_region = [(country_tuple[4], country_tuple[5], country_tuple[3]) for country_tuple in api_data]
+    wb_db.add_data_to_region_table(normalised_api_data_region)
+
+    normalised_api_data_country_general = [(country_tuple[0], country_tuple[1], country_tuple[2], country_tuple[4], country_tuple[6], country_tuple[7], country_tuple[8], country_tuple[9]) for country_tuple in api_data]
+    wb_db.add_data_to_country_general_info_table(normalised_api_data_country_general)
+
+    normalised_api_data_alias = [(country_tuple[2], country_tuple[0]) for country_tuple in api_data]
+    wb_db.add_data_to_country_alias_table(normalised_api_data_alias)
+
+    print("Adding additional country aliases...")
+    other_country_aliases = [
+        ('FRY Macedonia', 'MKD'),
+        ('Macedonia', 'MKD'),
+        ('Czech Republic', 'CZE'),
+        ('Czechia', 'CZE'),
+        ('United Kingdom', 'GBR'),
+        ('Great Britain', 'GBR'),
+        ('UK', 'GBR'),
+        ('Russian Federation', 'RUS'),
+        ('Russia', 'RUS'),
+        ('Kosovo', 'XKX')
+    ]
+    wb_db.add_data_to_country_alias_table(other_country_aliases)
 
     wb_db.close_connection()
 
