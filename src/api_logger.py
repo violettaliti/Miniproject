@@ -7,20 +7,12 @@ from psycopg import sql
 from dotenv import load_dotenv
 from decimal import Decimal # part of python standard library
 from datetime import datetime # part of python standard library
-from pathlib import Path # part of python standard library
 import pandas as pd
 import numpy as np
 
 #######################################
 # API: World Bank
 #######################################
-# Full list of World Bank ISO2 codes for countries in Europe
-europe_countries_codes = [
-    "AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IS","IE",
-    "IT","LV","LT","LU","MT","NL","NO","PL","PT","RO","SK","SI","ES","SE","CH",
-    "GB","AL","BA","RS","MK","ME","XK","UA","MD","BY"
-]
-
 def get_country_general_info():
     """
     this function fetch data about all countries' general info through an API request to World Bank API
@@ -293,18 +285,34 @@ class WorldBankDBPostgres:
         """replace the string special method to automatically display the db name"""
         return f"WorldBank PostgreSQL database (schema: thi_miniproject)"
 
-    def get_all_countries_info(self):
+    def get_all_eu_countries_info(self):
         """
-        fetch and display all countries' general info
+        fetch and display all European countries' general info
         """
+        # Full list of World Bank ISO2 codes for countries in Europe
+        europe_countries_iso2codes = [
+            "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IS", "IE",
+            "IT", "LV", "LT", "LU", "MT", "NL", "NO", "PL", "PT", "RO", "SK", "SI", "ES", "SE", "CH",
+            "GB", "AL", "BA", "RS", "MK", "ME", "XK", "UA", "MD", "BY"
+        ]
+
+        # dynamically create %s placeholders for each country code
+        eu_country_iso2codes = sql.SQL(", ").join(sql.Placeholder() * len(europe_countries_iso2codes))
+
+        query = sql.SQL(
+            "SELECT * FROM staging_country_general_info "
+            "WHERE country_iso2code IN ({codes}) "
+            "ORDER BY country_iso3code;"
+        ).format(codes = eu_country_iso2codes)
+
         try:
-            self.cursor.execute("SELECT * FROM staging_country_general_info ORDER BY country_iso3code")
+            self.cursor.execute(query, europe_countries_iso2codes)
             all_countries_rows = self.cursor.fetchall()
             if not all_countries_rows:
-                print(f"No country info available for {self}.")
+                print(f"No European country info available for {self}.")
                 return
             category = [row[0] for row in self.cursor.description]
-            print(f"\n--- Printing {len(all_countries_rows)} countries' general info for {self}: ---")
+            print(f"\n--- Printing {len(all_countries_rows)} European countries' general info for {self}: ---")
             number = 1
             for row in all_countries_rows:
                 print(f"\n{number}. Country info of '{row[1]}' is:")
@@ -320,7 +328,7 @@ class WorldBankDBPostgres:
                 print(", ".join(country_info))
         except (Exception, psycopg.DatabaseError) as e:
             self.connection.rollback()
-            raise DatabaseError(f"Something went wrong with getting all countries' info. Error type: {type(e).__name__}, error message: '{e}'.")
+            raise DatabaseError(f"Something went wrong with getting all European countries' info. Error type: {type(e).__name__}, error message: '{e}'.")
 
     def get_country_info(self, country_names):
         """
@@ -375,18 +383,18 @@ if __name__ == "__main__":
     wb_db = WorldBankDBPostgres()
     wb_db.add_data_to_staging_country_general_info_table(api_data)
 
-    display_all = os.getenv("DISPLAY_ALL_COUNTRIES_INFO", "false").strip().lower() in ("1", "true", "yes")
+    display_all = os.getenv("DISPLAY_ALL_EU_COUNTRIES_INFO", "false").strip().lower() in ("1", "true", "yes")
     if display_all:
-        wb_db.get_all_countries_info()
+        wb_db.get_all_eu_countries_info()
     else:
-        print(f"\n--- The user does not wish to display all countries' general info (•́ ᴖ •̀) (if you changed your mind, change the var DISPLAY_ALL_COUNTRIES_INFO to 'true' in 'docker compose' - service 'app_base' environment.) ---")
+        print(f"\n--- The user does not wish to display all European countries' general info (•́ ᴖ •̀) ---")
+        print("--- (if you changed your mind, change the var DISPLAY_ALL_EU_COUNTRIES_INFO to 'true' in 'docker compose' - service 'app_base' environment.) ---")
 
     names = os.getenv("COUNTRIES_OF_INTEREST", "").strip()
     if names:
         wb_db.get_country_info(names)
     else:
         print("\n--- Printing general country info for the countries of interest: No info about countries of interest was given ^. .^₎⟆ ---")
-
 
     normalised_api_data_region = [(country_tuple[4], country_tuple[5], country_tuple[3]) for country_tuple in api_data]
     wb_db.add_data_to_region_table(normalised_api_data_region)
