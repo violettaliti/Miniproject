@@ -99,27 +99,13 @@ def scrape_country_cpi_tables(url = wiki_url, headers = headers_default):
                 if not row_data:
                     continue
 
-                # use the avoid_index_error method to avoid rows with fewer data than available columns
                 try:
                     # country name as text
                     country_td = row_data[1] if len(row_data) > 1 else None
                     country_name = country_td.get_text(" ", strip = True) if isinstance(country_td, Tag) else None
                     data = {"Country": country_name}
 
-                    # year cells: take bold text only
-                    # for year_index, year in enumerate(years):
-                    #     cell_index = 2 + (year_index * 2)
-                    #     # get the <td> cell safely
-                    #     td = row_data[cell_index] if cell_index < len(row_data) else None
-                    #
-                    #     # check that the cell contains a <b> tag (bold)
-                    #     if isinstance(td, Tag):
-                    #         bold = td.select_one("b, strong")
-                    #         data[year] = bold.get_text(strip = True) if bold else None
-                    #     else:
-                    #         # no <b> tag -> skip or set as None
-                    #         data[year] = None
-                    print(f"{country_name=}")
+                    # get cpi scores for each year
                     current_year_index = 0
                     skip_next = False
                     for col_count, col in enumerate(row_data):
@@ -254,6 +240,7 @@ class WorldBankDBPostgres:
         password = os.getenv("DB_PASSWORD", os.getenv("POSTGRES_PASSWORD", "katzi"))  # in my .env file, I have a different pw but since it's in .gitignore, we can just use the default pw 'katzi'
         host = os.getenv("DB_HOST", "localhost")  # use 'db' inside docker container, 'localhost' outside (e.g. in locally installed apps such as pgAdmin)
         port = int(os.getenv("DB_PORT", 5555))  # use 5432 for inside the docker container, 5555 for locally installed apps such as pgAdmin
+        print(f".... Connecting to host '{host}' : port '{port}' .....\n")
 
         try:
             self.connection = self.connect_with_retry({
@@ -291,7 +278,7 @@ class WorldBankDBPostgres:
                 time.sleep(delay)
         raise last_err
 
-    def add_data_to_db(self, data: list = None, table_name: str = "staging_cpi_raw"):
+    def add_data_to_staging_cpi(self, data: list = None, table_name: str = "staging_cpi_raw"):
         """persist acquired data into db"""
         if not data:
             print("There is no data to add to the database. /ᐠ-˕-マ")
@@ -316,43 +303,45 @@ class WorldBankDBPostgres:
         """replace the string special method to automatically display the db name"""
         return f"WorldBank PostgreSQL database (schema: thi_miniproject)"
 
-    def get_country_info(self, country_names):
+    def get_cpi_country_info(self, country_names, start_year, end_year):
         """
         fetch and display info for one or more countries (case-insensitive)
         - country_names can be a single string: "Austria, germany" or a list: ["Austria", "gErManY"]
         - update 'docker compose', service 'app_base' environment var COUNTRIES_OF_INTEREST to include or remove any countries to be displayed
-        :param country_names
-        :return: country info
+        - years period includes the start and end year
+        - update 'docker compose', service 'app_base' environment var YEARS_OF_INTEREST to change the year period to be displayed
+        :param country_names, year_period
+        :return: country CPI score info
         """
         try:
             # turn input into a list of strings in case it is a string
             if isinstance(country_names, str):
                 country_names = [name.strip() for name in country_names.split(",")]
 
-            print(f"\n--- Printing country info for the following countries of interest: {', '.join(country_names)} (to update or change this list, go to 'docker compose' - service 'app_base' environment) ---")
-
-            self.cursor.execute("SELECT * FROM staging_cpi_raw WHERE country_name ILIKE ANY(%s) ORDER BY country_name;", (country_names,))
-            country_rows = self.cursor.fetchall()
-            if not country_rows:
-                print(f"No country info found for: {', '.join(country_names)}.")
+            if not country_names:
+                print("No countries provided.")
                 return
-            category = [row[0] for row in self.cursor.description]
 
-            number = 1
-            for row in country_rows:
-                print(f"\n{number}. Country info of '{row[1]}' is:")
-                number += 1
-                country_info = []
-                for col, val in zip(category, row):
-                    # convert decimals and datetimes to readable formats:
-                    if isinstance(val, Decimal):
-                        val = float(val)
-                    elif isinstance(val, datetime):
-                        val = val.strftime("%Y-%m-%d %H:%M:%S %Z")  # strftime stands for 'string format time'
-                    country_info.append(f"{col}: {val}")
-                print(", ".join(country_info))
+            print(f"\n--- Printing Corruption Perception Index (CPI) scores from {start_year} to {end_year} for the following countries of interest: {', '.join(country_names)} ---")
+            print("--- To update or change the countries and/or years of interest, please update 'docker compose' - service 'app_base' environment ---\n")
+            for country_idx, country_name in enumerate(country_names, start = 1):
+                print(f"\n{country_idx}. CPI scores of '{country_name}' from {start_year} to {end_year} is:")
+                self.cursor.execute("SELECT * FROM staging_cpi_raw WHERE country_name ILIKE %s AND year BETWEEN %s AND %s ORDER BY year;", (f"%{country_name}%", start_year, end_year))
+                country_rows = self.cursor.fetchall()
+                if not country_rows:
+                    print(f"No cpi info found for: {country_name}.")
+                    break
+
+                previous_year_score = 0
+                for row in country_rows:
+                    score_change = row[2] - previous_year_score
+                    if score_change == row[2]:
+                        print(f"- {row[1]}: {row[2]}")
+                    else:
+                        print(f"- {row[1]}: {row[2]} | Score change: {round(score_change, 1)}")
+                    previous_year_score = row[2]
         except (Exception, psycopg.DatabaseError) as e:
-            raise DatabaseError(f"Something went wrong with getting the country info of '{', '.join(country_names)}'. Error type: {type(e).__name__}, error message: '{e}'.")
+            raise DatabaseError(f"Something went wrong with getting the cpi info of '{', '.join(country_names)}'. Error type: {type(e).__name__}, error message: '{e}'.")
 
     def close_connection(self):
         try:
@@ -371,6 +360,15 @@ if __name__ == "__main__":
     sorted_merged_table = merge_tables_by_country(normalised_dfs)
     cpi_data = transform_and_clean_data(sorted_merged_table)
     wb_db = WorldBankDBPostgres()
-    wb_db.add_data_to_db(cpi_data)
+    wb_db.add_data_to_staging_cpi(cpi_data)
+
+    names = os.getenv("COUNTRIES_OF_INTEREST", "Austria, Germany").strip()
+    start_year = os.getenv("START_YEAR_OF_INTEREST", "2000")
+    end_year = os.getenv("END_YEAR_OF_INTEREST", "2024")
+
+    if names and start_year and end_year:
+        wb_db.get_cpi_country_info(names, start_year, end_year)
+    else:
+        print("\n--- Printing general country info for the countries of interest: No info about countries of interest was given ^. .^₎⟆ ---")
 
     wb_db.close_connection()
