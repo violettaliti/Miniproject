@@ -6,10 +6,9 @@ import pandas as pd
 import numpy as np
 from functools import reduce # part of python standard library
 import os # part of python standard library
+from save_data import DBPostgres, DatabaseError
 import psycopg
 from psycopg import sql
-from dotenv import load_dotenv
-import time # part of python standard library
 
 # my web crawler identity
 headers_default = {
@@ -226,62 +225,12 @@ def transform_and_clean_data(table_to_be_transformed):
 #######################################
 # Save / persist to db
 #######################################
-class DatabaseError(Exception):
-    pass
-
-class WorldBankDBPostgres:
-    def __init__(self):
-        """
-        automatically connect to postgres database when a class object is instantiated.
-        """
-        load_dotenv()  # this reads .env locally, in docker env is already there / set
-        dbname = os.getenv("DB_NAME", os.getenv("POSTGRES_DB", "worldbank"))  # double fallbacks: if there's no env var name 'DB_NAME', then check for 'POSTGRES_DB', if still fails, use the default 'worldbank'
-        user = os.getenv("DB_USER", os.getenv("POSTGRES_USER", "user"))
-        password = os.getenv("DB_PASSWORD", os.getenv("POSTGRES_PASSWORD", "katzi"))  # in my .env file, I have a different pw but since it's in .gitignore, we can just use the default pw 'katzi'
-        host = os.getenv("DB_HOST", "localhost")  # use 'db' inside docker container, 'localhost' outside (e.g. in locally installed apps such as pgAdmin)
-        port = int(os.getenv("DB_PORT", 5555))  # use 5432 for inside the docker container, 5555 for locally installed apps such as pgAdmin
-        print(f".... Connecting to host '{host}' : port '{port}' .....\n")
-
-        try:
-            self.connection = self.connect_with_retry({
-                "dbname": dbname,
-                "user": user,
-                "password": password,
-                "host": host,
-                "port": port,
-                "options": "-c search_path=thi_miniproject" # applied for the entire session, so that I don't have to manually command 'SET search_path TO thi_miniproject;' for every SQL query
-            })
-            self.cursor = self.connection.cursor()
-            self.connection.commit()
-            print("\n- Connected to database (schema 'thi_miniproject' is set)! -\n")
-
-        except (Exception, psycopg.DatabaseError) as e:
-            self.connection = psycopg.connect(dbname = dbname, user = user, password = password, host = host, port = port)
-            raise DatabaseError(f"Something went wrong with the connection ≽^- ˕ -^≼ Error type: {type(e).__name__}, error message: '{e}'.")
-
-    @staticmethod
-    def connect_with_retry(dsn_kwargs, retries = 5, delay = 3): # helper function
-        """
-        try to connect to postgres multiple times before giving up.
-        useful when db starts slower than the app in docker compose.
-        """
-        last_err = None
-        for attempt in range(1, retries + 1):
-            try:
-                conn = psycopg.connect(**dsn_kwargs)
-                conn.autocommit = False
-                print(f"Connected on attempt # {attempt} ₍^. .^₎⟆")
-                return conn
-            except psycopg.OperationalError as e:
-                last_err = e
-                print(f"Attempt {attempt}: Postgres not ready yet. Retrying in {delay}s...")
-                time.sleep(delay)
-        raise last_err
-
-    def add_data_to_staging_cpi(self, data: list = None, table_name: str = "staging_cpi_raw"):
+class WebDB(DBPostgres):
+    """child class of DBPostgres"""
+    def add_data_to_staging_cpi(self, data: list, table_name: str = "staging_cpi_raw"):
         """persist acquired data into db"""
         if not data:
-            print("There is no data to add to the database. /ᐠ-˕-マ")
+            print("There is no CPI data to add to the database. /ᐠ-˕-マ")
             return
 
         query = sql.SQL("""
@@ -292,16 +241,12 @@ class WorldBankDBPostgres:
         # on conflict do nothing to prevent throwing errors and creating duplicates
 
         try:
-            self.cursor.executemany(query.as_string(self.connection), data)
+            self._executemany(query, data)
             self.connection.commit()
-            print(f"Successfully added or updated {len(data)} rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ")
+            print(f"Successfully added or updated {len(data)} raw rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ")
         except (Exception, psycopg.DatabaseError) as e:
             self.connection.rollback()
-            raise DatabaseError(f"Something went wrong with adding the data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
-
-    def __str__(self):
-        """replace the string special method to automatically display the db name"""
-        return f"WorldBank PostgreSQL database (schema: thi_miniproject)"
+            raise DatabaseError(f"Something went wrong with adding the CPI data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
 
     def get_cpi_country_info(self, country_names, start_year, end_year):
         """
@@ -309,46 +254,38 @@ class WorldBankDBPostgres:
         - country_names can be a single string: "Austria, germany" or a list: ["Austria", "gErManY"]
         - update 'docker compose', service 'app_base' environment var COUNTRIES_OF_INTEREST to include or remove any countries to be displayed
         - years period includes the start and end year
-        - update 'docker compose', service 'app_base' environment var YEARS_OF_INTEREST to change the year period to be displayed
-        :param country_names, year_period
-        :return: country CPI score info
+        - update 'docker compose', service 'app_base' environment vars START_YEAR_OF_INTEREST and END_YEAR_OF_INTEREST to change the year period to be displayed
+        :param country_names, start_year, end_year
+        :return: country CPI scores info
         """
         try:
             # turn input into a list of strings in case it is a string
             if isinstance(country_names, str):
                 country_names = [name.strip() for name in country_names.split(",")]
-
             if not country_names:
                 print("No countries provided.")
                 return
-
             print(f"\n--- Printing Corruption Perception Index (CPI) scores from {start_year} to {end_year} for the following countries of interest: {', '.join(country_names)} ---")
-            print("--- To update or change the countries and/or years of interest, please update 'docker compose' - service 'app_base' environment ---\n")
+            print("--- To update or change the countries and/or years of interest, please update 'docker compose' - service 'app_base' environment ---")
+
             for country_idx, country_name in enumerate(country_names, start = 1):
                 print(f"\n{country_idx}. CPI scores of '{country_name}' from {start_year} to {end_year} is:")
                 self.cursor.execute("SELECT * FROM staging_cpi_raw WHERE country_name ILIKE %s AND year BETWEEN %s AND %s ORDER BY year;", (f"%{country_name}%", start_year, end_year))
                 country_rows = self.cursor.fetchall()
                 if not country_rows:
-                    print(f"No cpi info found for: {country_name}.")
-                    break
+                    print(f"No CPI info found for: {country_name}.")
+                    continue
 
-                previous_year_score = 0
+                previous_year_score = None
                 for row in country_rows:
-                    score_change = row[2] - previous_year_score
-                    if score_change == row[2]:
+                    if previous_year_score is None:
                         print(f"- {row[1]}: {row[2]}")
                     else:
+                        score_change = row[2] - previous_year_score
                         print(f"- {row[1]}: {row[2]} | Score change: {round(score_change, 1)}")
                     previous_year_score = row[2]
         except (Exception, psycopg.DatabaseError) as e:
-            raise DatabaseError(f"Something went wrong with getting the cpi info of '{', '.join(country_names)}'. Error type: {type(e).__name__}, error message: '{e}'.")
-
-    def close_connection(self):
-        try:
-            self.cursor.close()
-        except (Exception, psycopg.DatabaseError) as e:
-            raise DatabaseError(f"Something went wrong with closing the connection. Error type: {type(e).__name__}, error message: '{e}'.")
-
+            raise DatabaseError(f"Something went wrong with getting the CPI info of '{', '.join(country_names)}'. Error type: {type(e).__name__}, error message: '{e}'.")
 
 #######################################
 # Run the web crawlers
@@ -359,16 +296,16 @@ if __name__ == "__main__":
     normalised_dfs = normalise_cpi_data(dfs)
     sorted_merged_table = merge_tables_by_country(normalised_dfs)
     cpi_data = transform_and_clean_data(sorted_merged_table)
-    wb_db = WorldBankDBPostgres()
-    wb_db.add_data_to_staging_cpi(cpi_data)
+    web_db = WebDB()
+    web_db.add_data_to_staging_cpi(cpi_data)
 
     names = os.getenv("COUNTRIES_OF_INTEREST", "Austria, Germany").strip()
     start_year = os.getenv("START_YEAR_OF_INTEREST", "2000")
     end_year = os.getenv("END_YEAR_OF_INTEREST", "2024")
 
     if names and start_year and end_year:
-        wb_db.get_cpi_country_info(names, start_year, end_year)
+        web_db.get_cpi_country_info(names, start_year, end_year)
     else:
-        print("\n--- Printing general country info for the countries of interest: No info about countries of interest was given ^. .^₎⟆ ---")
+        print("\n--- Printing CPI scores for the countries of interest: Not a single country of interest was given ^. .^₎⟆ ---")
 
-    wb_db.close_connection()
+    web_db.close_connection()

@@ -1,7 +1,9 @@
 .idea/
 .DS_Store
 .env
-**/__pycache__/ # ** means anywhere
+
+# ** means anywhere
+**/__pycache__/ 
 
 # experiement scripts
 /experiments

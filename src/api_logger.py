@@ -1,12 +1,9 @@
 # imports
 import os # part of python standard library -> no need to add to requirements.txt
 import requests
+from save_data import DBPostgres, DatabaseError
 import psycopg
-import time # part of python standard library
 from psycopg import sql
-from dotenv import load_dotenv
-from decimal import Decimal # part of python standard library
-from datetime import datetime # part of python standard library
 import pandas as pd
 import numpy as np
 
@@ -101,70 +98,12 @@ def test():
 #######################################
 # Save / persist to db
 #######################################
-class DatabaseError(Exception):
-    pass
-
-class WorldBankDBPostgres:
-    def __init__(self):
-        """
-        automatically connect to postgres database when a class object is instantiated.
-        """
-        load_dotenv()  # this reads .env locally, in docker env is already there / set
-        dbname = os.getenv("DB_NAME", os.getenv("POSTGRES_DB", "worldbank"))  # double fallbacks: if there's no env var name 'DB_NAME', then check for 'POSTGRES_DB', if still fails, use the default 'worldbank'
-        user = os.getenv("DB_USER", os.getenv("POSTGRES_USER", "user"))
-        password = os.getenv("DB_PASSWORD", os.getenv("POSTGRES_PASSWORD", "katzi"))  # in my .env file, I have a different pw but since it's in .gitignore, we can just use the default pw 'katzi'
-        host = os.getenv("DB_HOST", "localhost")  # use 'db' inside docker container, 'localhost' outside (e.g. in locally installed apps such as pgAdmin)
-        port = int(os.getenv("DB_PORT", 5555))  # use 5432 for inside the docker container, 5555 for locally installed apps such as pgAdmin
-        print(f".... Connecting to host '{host}' : port '{port}' .....\n")
-
-        try:
-            self.connection = self.connect_with_retry({
-                "dbname": dbname,
-                "user": user,
-                "password": password,
-                "host": host,
-                "port": port,
-                "options": "-c search_path=thi_miniproject" # applied for the entire session, so that I don't have to manually command 'SET search_path TO thi_miniproject;' for every SQL query
-            })
-            self.cursor = self.connection.cursor()
-            self.connection.commit()
-            print("\n- Connected to database (schema 'thi_miniproject' is set)! -\n")
-
-        except (Exception, psycopg.DatabaseError) as e:
-            self.connection = psycopg.connect(dbname = dbname, user = user, password = password, host = host, port = port)
-            raise DatabaseError(f"Something went wrong with the connection ≽^- ˕ -^≼ Error type: {type(e).__name__}, error message: '{e}'.")
-
-    @staticmethod
-    def connect_with_retry(dsn_kwargs, retries = 5, delay = 3): # helper function
-        """
-        try to connect to postgres multiple times before giving up.
-        useful when db starts slower than the app in docker compose.
-        """
-        last_err = None
-        for attempt in range(1, retries + 1):
-            try:
-                conn = psycopg.connect(**dsn_kwargs)
-                conn.autocommit = False
-                print(f"Connected on attempt # {attempt} ₍^. .^₎⟆")
-                return conn
-            except psycopg.OperationalError as e:
-                last_err = e
-                print(f"Attempt {attempt}: Postgres not ready yet. Retrying in {delay}s...")
-                time.sleep(delay)
-        raise last_err
-
-    def _drop_table(self, table_name):
-        """drop table as needed"""
-        try:
-            self.cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
-            self.connection.commit()
-        except (Exception, psycopg.DatabaseError) as e:
-            raise DatabaseError(f"Something went wrong with dropping the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
-
-    def add_data_to_staging_country_general_info_table(self, data: list = None, table_name: str = "staging_country_general_info"):
-        """persist acquired data into db"""
+class ApiDB(DBPostgres):
+    """child class of DBPostgres"""
+    def add_data_to_staging_country_general_info_table(self, data: list, table_name: str = "staging_country_general_info"):
+        """persist acquired raw data into staging_db"""
         if not data:
-            print("There is no data to add to the database. /ᐠ-˕-マ")
+            print("There is no API data to add to the database. /ᐠ-˕-マ")
             return
 
         query = sql.SQL("""
@@ -210,17 +149,17 @@ class WorldBankDBPostgres:
         # and add to the update_count only if the new data is different from the old one (only meaningful updates count)
 
         try:
-            self.cursor.executemany(query.as_string(self.connection), data)
+            self._executemany(query, data)
             self.connection.commit()
-            print(f"Successfully added or updated {len(data)} rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ")
+            print(f"Successfully added or updated {len(data)} rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ\n")
         except (Exception, psycopg.DatabaseError) as e:
             self.connection.rollback()
-            raise DatabaseError(f"Something went wrong with adding the data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
+            raise DatabaseError(f"Something went wrong with adding the API data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
 
-    def add_data_to_country_general_info_table(self, data: list = None, table_name: str = "country_general_info"):
-        """persist acquired data into db"""
+    def add_data_to_country_general_info_table(self, data: list, table_name: str = "country_general_info"):
+        """persist normalised acquired data into db"""
         if not data:
-            print("There is no data to add to the database. /ᐠ-˕-マ")
+            print("There is no normalised API-data to add to the database. /ᐠ-˕-マ")
             return
 
         query = sql.SQL("""
@@ -232,17 +171,17 @@ class WorldBankDBPostgres:
         # on conflict do nothing to prevent throwing errors and creating duplicates
 
         try:
-            self.cursor.executemany(query.as_string(self.connection), data)
+            self._executemany(query, data)
             self.connection.commit()
-            print(f"Successfully added or updated {len(data)} rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ")
+            print(f"Successfully added or updated {len(data)} normalised rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ\n")
         except (Exception, psycopg.DatabaseError) as e:
             self.connection.rollback()
-            raise DatabaseError(f"Something went wrong with adding the data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
+            raise DatabaseError(f"Something went wrong with adding the normalised API-data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
 
-    def add_data_to_region_table(self, data: list = None, table_name: str = "region"):
-        """persist acquired data into db"""
+    def add_data_to_region_table(self, data: list, table_name: str = "region"):
+        """persist normalised acquired data into db"""
         if not data:
-            print("There is no data to add to the database. /ᐠ-˕-マ")
+            print("There is no region data to add to the database. /ᐠ-˕-マ")
             return
 
         query = sql.SQL("""
@@ -253,17 +192,17 @@ class WorldBankDBPostgres:
         # on conflict do nothing to prevent throwing errors and creating duplicates
 
         try:
-            self.cursor.executemany(query.as_string(self.connection), data)
+            self._executemany(query, data)
             self.connection.commit()
-            print(f"Successfully added or updated {len(data)} rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ")
+            print(f"Successfully added or updated {len(data)} normalised rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ\n")
         except (Exception, psycopg.DatabaseError) as e:
             self.connection.rollback()
-            raise DatabaseError(f"Something went wrong with adding the data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
+            raise DatabaseError(f"Something went wrong with adding the region data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
 
-    def add_data_to_country_alias_table(self, data: list = None, table_name: str = "country_alias"):
-        """persist acquired data into db"""
+    def add_data_to_country_alias_table(self, data: list, table_name: str = "country_alias"):
+        """persist staging data into db"""
         if not data:
-            print("There is no data to add to the database. /ᐠ-˕-マ")
+            print("There is no country aliases to add to the database. /ᐠ-˕-マ")
             return
 
         query = sql.SQL("""
@@ -274,16 +213,12 @@ class WorldBankDBPostgres:
         # on conflict do nothing to prevent throwing errors and creating duplicates
 
         try:
-            self.cursor.executemany(query.as_string(self.connection), data)
+            self._executemany(query, data)
             self.connection.commit()
-            print(f"Successfully added or updated {len(data)} rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ")
+            print(f"Successfully added or updated {len(data)} country-alias rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ\n")
         except (Exception, psycopg.DatabaseError) as e:
             self.connection.rollback()
-            raise DatabaseError(f"Something went wrong with adding the data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
-
-    def __str__(self):
-        """replace the string special method to automatically display the db name"""
-        return f"WorldBank PostgreSQL database (schema: thi_miniproject)"
+            raise DatabaseError(f"Something went wrong with adding the country-alias data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
 
     def get_all_eu_countries_info(self):
         """
@@ -313,22 +248,12 @@ class WorldBankDBPostgres:
                 return
             category = [row[0] for row in self.cursor.description]
             print(f"\n--- Printing {len(all_countries_rows)} European countries' general info for {self}: ---")
-            number = 1
-            for row in all_countries_rows:
-                print(f"\n{number}. Country info of '{row[1]}' is:")
-                number += 1
-                country_info = []
-                for col, val in zip(category, row):
-                    # convert decimals and datetimes to readable formats:
-                    if isinstance(val, Decimal):
-                        val = float(val)
-                    elif isinstance(val, datetime):
-                        val = val.strftime("%Y-%m-%d %H:%M:%S %Z") # strftime stands for 'string format time'
-                    country_info.append(f"{col}: {val}")
-                print(", ".join(country_info))
+            for idx, row in enumerate(all_countries_rows, start = 1):
+                print(f"\n{idx}. Country info of '{row[2]}' is:")
+                print(self._pretty_row(category, row))
         except (Exception, psycopg.DatabaseError) as e:
             self.connection.rollback()
-            raise DatabaseError(f"Something went wrong with getting all European countries' info. Error type: {type(e).__name__}, error message: '{e}'.")
+            raise DatabaseError(f"Something went wrong with getting all European countries' general info. Error type: {type(e).__name__}, error message: '{e}'.")
 
     def get_country_info(self, country_names):
         """
@@ -352,27 +277,13 @@ class WorldBankDBPostgres:
                 return
             category = [row[0] for row in self.cursor.description]
 
-            number = 1
-            for row in country_rows:
-                print(f"\n{number}. Country info of '{row[1]}' is:")
-                number += 1
-                country_info = []
-                for col, val in zip(category, row):
-                    # convert decimals and datetimes to readable formats:
-                    if isinstance(val, Decimal):
-                        val = float(val)
-                    elif isinstance(val, datetime):
-                        val = val.strftime("%Y-%m-%d %H:%M:%S %Z")  # strftime stands for 'string format time'
-                    country_info.append(f"{col}: {val}")
-                print(", ".join(country_info))
+            for idx, row in enumerate(country_rows, start = 1):
+                print(f"\n{idx}. Country info of '{row[2]}' is:")
+                print(self._pretty_row(category, row))
+            print("\n--- Finished printing country info! ---\n")
+
         except (Exception, psycopg.DatabaseError) as e:
             raise DatabaseError(f"Something went wrong with getting the country info of '{', '.join(country_names)}'. Error type: {type(e).__name__}, error message: '{e}'.")
-
-    def close_connection(self):
-        try:
-            self.cursor.close()
-        except (Exception, psycopg.DatabaseError) as e:
-            raise DatabaseError(f"Something went wrong with closing the connection. Error type: {type(e).__name__}, error message: '{e}'.")
 
 #######################################
 # Run the API requests
@@ -380,30 +291,30 @@ class WorldBankDBPostgres:
 if __name__ == "__main__":
     print("Hello from api_logger!")
     api_data = get_country_general_info()
-    wb_db = WorldBankDBPostgres()
-    wb_db.add_data_to_staging_country_general_info_table(api_data)
+    wb_api_db = ApiDB()
+    wb_api_db.add_data_to_staging_country_general_info_table(api_data)
 
     display_all = os.getenv("DISPLAY_ALL_EU_COUNTRIES_INFO", "false").strip().lower() in ("1", "true", "yes")
     if display_all:
-        wb_db.get_all_eu_countries_info()
+        wb_api_db.get_all_eu_countries_info()
     else:
         print(f"\n--- The user does not wish to display all European countries' general info (•́ ᴖ •̀) ---")
         print("--- (if you changed your mind, change the var DISPLAY_ALL_EU_COUNTRIES_INFO to 'true' in 'docker compose' - service 'app_base' environment.) ---")
 
     names = os.getenv("COUNTRIES_OF_INTEREST", "").strip()
     if names:
-        wb_db.get_country_info(names)
+        wb_api_db.get_country_info(names)
     else:
         print("\n--- Printing general country info for the countries of interest: No info about countries of interest was given ^. .^₎⟆ ---")
 
     normalised_api_data_region = [(country_tuple[4], country_tuple[5], country_tuple[3]) for country_tuple in api_data]
-    wb_db.add_data_to_region_table(normalised_api_data_region)
+    wb_api_db.add_data_to_region_table(normalised_api_data_region)
 
     normalised_api_data_country_general = [(country_tuple[0], country_tuple[1], country_tuple[2], country_tuple[4], country_tuple[6], country_tuple[7], country_tuple[8], country_tuple[9]) for country_tuple in api_data]
-    wb_db.add_data_to_country_general_info_table(normalised_api_data_country_general)
+    wb_api_db.add_data_to_country_general_info_table(normalised_api_data_country_general)
 
     normalised_api_data_alias = [(country_tuple[2], country_tuple[0]) for country_tuple in api_data]
-    wb_db.add_data_to_country_alias_table(normalised_api_data_alias)
+    wb_api_db.add_data_to_country_alias_table(normalised_api_data_alias)
 
     print("Adding additional country aliases...")
     other_country_aliases = [
@@ -449,8 +360,8 @@ if __name__ == "__main__":
         ("Palestine", "PSE")
     ]
     # unresolved: ("Serbia and Montenegro", ""), ("Taiwan", "TWN"), ("FR Yugoslavia", "YUG"), and ("Congo", "COG / COD")
-    wb_db.add_data_to_country_alias_table(other_country_aliases)
+    wb_api_db.add_data_to_country_alias_table(other_country_aliases)
 
-    wb_db.close_connection()
+    wb_api_db.close_connection()
 
 
