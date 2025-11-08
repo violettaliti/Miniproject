@@ -129,7 +129,7 @@ docker compose up --build
   - Maintenance database: worldbank
   - Username: user
   - Password: katzi
-    - Save password? > Yes for peace of mind later
+    - Save password? --> Yes for peace of mind later!!
 - Step 5: 
   - > Servers -> miniproject 
     - > Databases -> worldbank 
@@ -140,3 +140,6 @@ docker compose up --build
 SET search_path TO thi_miniproject;
 ```
 then have fun ദ്ദി/ᐠ｡‸｡ᐟ\ !!
+
+## How to access PowerBI dashboard
+tbc.
