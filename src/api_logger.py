@@ -6,10 +6,39 @@ import psycopg
 from psycopg import sql
 import pandas as pd
 import numpy as np
+import time
+
+headers_default = {
+    "User-Agent": (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:143.0) "
+        "Gecko/20100101 Firefox/143.0 "
+    "(compatible; violettalitiScraper/1.0; +https://github.com/violettaliti)"
+    )
+}
 
 #######################################
 # API: World Bank
 #######################################
+def get_with_timeoff(url, attempts = 5, base_sleep = 1.0, timeout = 15):
+    for i in range(attempts):
+        response = requests.get(url, timeout = timeout, headers = headers_default)
+        if response.status_code == 200:
+            return response
+        if response.status_code == 429:
+            retry_after = response.headers.get("Retry-After")
+            if retry_after:
+                sleep_s = float(retry_after)
+            else:
+                sleep_s = base_sleep * (2 ** i)
+            print(f"\n---- HTTP response status 429 received (indicating 'too many requests'). Sleeping {sleep_s:.1f}s and retrying... ----\n")
+            time.sleep(sleep_s)
+            continue
+        # other non-200: brief pause then continue to next source
+        print(f"Status {response.status_code} for {url} ---> skipping!\n")
+        return response
+    print(f"Gave up after {attempts} attempts for {url} .... ₍^. .^₎Ⳋ\n")
+    return response # last response
+
 def get_country_general_info():
     """
     this function fetch data about all countries' general info through an API request to World Bank API
@@ -149,69 +178,101 @@ def get_all_wb_sources():
         print(sources_df.info())
         print(f"\n--- {len(sources_df)} WB sources have been collected!  --- ദ്ദി（• ˕ •マ.ᐟ\n")
 
+        # list of all source ids for looping later
+        source_ids = sources_df["source_id"].unique().tolist()
+
         # turn the df into a list of tuples for saving into the db later
         wb_sources_db = sources_df.replace({np.nan: None})  # replace NaN with None for postgreSQL
         wb_sources_rows = list(wb_sources_db.itertuples(index = False, name = None))
 
-        return wb_sources_rows
+        return wb_sources_rows, source_ids
 
     except requests.exceptions.RequestException as e:
         print(f"Something went wrong ૮₍•᷄  ༝ •᷅₎ა --> Error message: {type(e).__name__} - {e}.")
 
-def get_all_wb_indicators():
+def get_all_wb_indicators(source_ids_list):
     """
-    this function fetch all World Bank indicators
-    :return: World Bank indicators
+    this function fetch all World Bank indicators across multiple sources (e.g., WDI, IDS, GEM, etc.)
+    :param source_ids_list: list of source ids obtained from the get_all_wb_sources function
+    :return:
+        wb_indicators_rows: list of tuples for DB insert into wb_indicators
+        indicator_ids: list of all unique indicator IDs
+        indicator_topics_rows: list of (indicator_id, topic_id)
     """
-    try:
-        url = "https://api.worldbank.org/v2/source/2/indicators?format=json&per_page=20000"
-        response = requests.get(url, timeout = 5)
-        print("\nQueried URL (for getting all WB indicators):", response.url, "\n")
+    all_indicators_df = []
+    failed_sources = []
+    print(f"\n ... Fetching indicators from {len(source_ids_list)} WB sources ...\n")
 
-        if response.status_code != 200:
-            print(f"Something went wrong, I couldn't fetch the requested WB indicators /ᐠ-˕-マ. Error status code: {response.status_code}.")
-            print(response.content)
-            return []
+    for source_id in source_ids_list:
+        url = f"https://api.worldbank.org/v2/source/{source_id}/indicators?format=json&per_page=20000"
+        print(f"... Querying source ID {source_id}: {url} ... ₍^. .^₎Ⳋ\n")
 
-        print(".... API request approved! Collecting all WB indicators .... (•˕•マ.ᐟ \n")
-        wb_indicators = response.json()[1]
+        try:
+            response = get_with_timeoff(url)
+            if response.status_code != 200:
+                print(f"..!!.. Source {source_id} returned status {response.status_code} ---> skipping!\n")
+                failed_sources.append(source_id)
+                continue
 
-        indicators_df = pd.DataFrame([
-            {
-                "indicator_id": indicator["id"], # []: mandatory fields - strict dict access -> it doesn’t exist, Python raises a KeyError
-                "indicator_name": indicator["name"],
-                "source_id": indicator["source"]["id"],
-                "description": indicator.get("sourceNote"),
-                "topics": indicator["topics"]
-            } for indicator in wb_indicators
-        ])
-        # enforce types
-        indicators_df["source_id"] = indicators_df["source_id"].astype(int)
+            json_data = response.json()
+            # some sources return empty datasets
+            if len(json_data) < 2 or not json_data[1]:
+                print(f"..!!.. Source {source_id} returned no indicators --> skipping!")
+                continue
 
-        print("Indicator info df shape:", indicators_df.shape)
-        print("\nFirst five rows of the indicators df:\n", indicators_df.head())
-        print(indicators_df.info())
-        print(f"\n--- {len(indicators_df)} WB indicators have been collected!  --- ദ്ദി（• ˕ •マ.ᐟ\n")
+            wb_indicators = json_data[1]
+            indicators_df = pd.DataFrame([
+                {
+                    "indicator_id": indicator["id"], # []: mandatory fields - strict dict access -> it doesn’t exist, Python raises a KeyError
+                    "indicator_name": indicator["name"],
+                    "source_id": int(indicator["source"]["id"]),
+                    "description": indicator.get("sourceNote"),
+                    "topics": indicator.get("topics", [])
+                } for indicator in wb_indicators
+            ])
+            print(f"\n--- Source {source_id}: {len(indicators_df)} indicators have been collected!  --- ദ്ദി（• ˕ •マ.ᐟ\n")
+            all_indicators_df.append(indicators_df)
 
-        # turn the df into a list of tuples and drop column 'topics' which violates 3NF for saving into the db later
-        wb_indicators_db = indicators_df.replace({np.nan: None})  # replace NaN with None for postgreSQL
-        wb_indicators_rows = list(wb_indicators_db.drop(columns = ["topics"]).itertuples(index = False, name = None))
+            # avoid suspicion :D
+            time.sleep(0.5)
 
-        # list of all indicator ids for looping later
-        indicator_ids = indicators_df["indicator_id"].unique().tolist()
+        except requests.exceptions.RequestException as e:
+            print(f"... Failed to fetch source {source_id}: ૮₍•᷄  ༝ •᷅₎ა --> Error message: {type(e).__name__} - {e}.\n")
+            failed_sources.append(source_id)
+            continue
 
-        # get the indicator-topic list, and flatten the nested list of topics per indicator
-        indicator_topics_rows = []
-        for _, row in indicators_df.iterrows(): # _ ignore the numeric index, and iterrows() iterates over each row of the DataFrame
-            indicator_id = row["indicator_id"]
-            for topic in row["topics"]:
-                topic_id = int(topic.get("id"))
+    # combine all sources into one df
+    if not all_indicators_df:
+        print("...!!... No indicator data collected at all ...!!... ૮₍•᷄  ༝ •᷅₎ა \n")
+        return [], [], []
+
+    combined_df = pd.concat(all_indicators_df, ignore_index = True)
+    print(f"\n--- Combined total indicators: {len(combined_df)} indicators collected across {len(source_ids_list)} sources! (•˕ •マ.ᐟ ---\n")
+    print(f"-- Sources skipped: {failed_sources} --\n")
+
+    # replace NaN with None for postgreSQL
+    wb_indicators_db = combined_df.replace({np.nan: None})
+    # turn the df into a list of tuples and drop column 'topics' which violates 3NF for persisting into the db later
+    wb_indicators_rows = list(wb_indicators_db.drop(columns = ["topics"]).itertuples(index = False, name = None))
+
+    # list of all indicator ids for looping later
+    indicator_ids = combined_df["indicator_id"].unique().tolist()
+
+    # get the indicator-topic list, and flatten the nested list of topics per indicator
+    indicator_topics_rows = []
+    for _, row in combined_df.iterrows(): # _ ignore the numeric index, and iterrows() iterates over each row of the combined df
+        indicator_id = row["indicator_id"]
+        topics = row["topics"] or [] # safe / fallback for empty lists / None
+        for topic in topics:
+            topic_id = topic.get("id")
+            if not topic_id:
+                continue # if None or empty str then skip
+            try:
                 indicator_topics_rows.append([indicator_id, topic_id])
+            except (TypeError, ValueError):
+                continue
 
-        return wb_indicators_rows, indicator_ids, indicator_topics_rows
-
-    except requests.exceptions.RequestException as e:
-        print(f"Something went wrong ૮₍•᷄  ༝ •᷅₎ა --> Error message: {type(e).__name__} - {e}.")
+    return wb_indicators_rows, indicator_ids, indicator_topics_rows, failed_sources
 
 # csv data
 #     try:
@@ -594,10 +655,10 @@ if __name__ == "__main__":
     wb_topics_rows = get_all_wb_topics()
     wb_api_db.add_data_to_wb_topics_table(wb_topics_rows)
 
-    wb_sources_rows = get_all_wb_sources()
+    wb_sources_rows, source_ids = get_all_wb_sources()
     wb_api_db.add_data_to_wb_source_table(wb_sources_rows)
 
-    wb_indicators_rows, indicator_ids, indicator_topics_rows = get_all_wb_indicators()
+    wb_indicators_rows, indicator_ids, indicator_topics_rows, failed_sources = get_all_wb_indicators(source_ids)
     wb_api_db.add_data_to_wb_indicators_table(wb_indicators_rows)
     wb_api_db.add_data_to_wb_indicator_topics_table(indicator_topics_rows)
 
