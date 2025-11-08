@@ -76,6 +76,35 @@ CREATE TABLE IF NOT EXISTS thi_miniproject.country_alias (
 	country_iso3code TEXT NOT NULL REFERENCES thi_miniproject.country_general_info(country_iso3code)
 );
 
+-- world bank topics table
+CREATE TABLE IF NOT EXISTS thi_miniproject.wb_topics (
+	topic_id INTEGER PRIMARY KEY,
+	topic_name TEXT NOT NULL,
+	description TEXT NOT NULL
+);
+
+-- world bank indicators table
+CREATE TABLE IF NOT EXISTS thi_miniproject.wb_indicators (
+	indicator_id TEXT PRIMARY KEY,
+	indicator_name TEXT NOT NULL,
+	source_id INTEGER NOT NULL,
+	description TEXT NOT NULL
+);
+
+-- world bank indicator_topics table
+CREATE TABLE IF NOT EXISTS thi_miniproject.wb_indicator_topics (
+	indicator_id TEXT REFERENCES thi_miniproject.wb_indicators(indicator_id),
+	topic_id INTEGER REFERENCES thi_miniproject.wb_topics(topic_id),
+	PRIMARY KEY(indicator_id, topic_id)
+);
+
+-- world bank source table
+CREATE TABLE IF NOT EXISTS thi_miniproject.wb_source (
+	source_id INTEGER PRIMARY KEY,
+	source_name TEXT NOT NULL,
+	source_organisation TEXT
+);
+
 ----------------------------------------------------------
 -- Tables for data from web scraping
 ----------------------------------------------------------
