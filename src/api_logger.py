@@ -60,40 +60,144 @@ def get_country_general_info():
     except requests.exceptions.RequestException as e:
         print(f"Something went wrong ૮₍•᷄  ༝ •᷅₎ა --> Error message: {type(e).__name__} - {e}.")
 
-"""
-indicators = [
-    "NY.GDP.MKTP.KD.ZG",  # GDP growth (annual %)
-    "FP.CPI.TOTL.ZG",     # Inflation, consumer prices (annual %)
-    "SL.UEM.TOTL.ZS"      # Unemployment, total (% of labor force)
-]
-
-def test():
+def get_all_wb_topics():
+    """
+    this function fetch all World Bank umbrella topics (21 in total)
+    :return: World Bank topics
+    """
     try:
-        url = "https://api.worldbank.org/v2/country/all/indicator/SP.POP.TOTL;NY.GDP.MKTP.KD.ZG;FP.CPI.TOTL.ZG;SL.UEM.TOTL.ZS;CC.EST?per_page=20000&format=csv" # indicators:  | NY.GDP.MKTP.KD.ZG: GDP growth | CC.EST: corruption info
-        response = requests.get(url, timeout=5)
-        print("\nQueried URL:", response.url, "\n")
+        url = "https://api.worldbank.org/v2/topic?format=json"
+        response = requests.get(url, timeout = 5)
+        print("\nQueried URL (for getting all WB topics):", response.url, "\n")
 
-        # if running inside Docker -> keep this as /data
-        # if running locally outside Docker -> set DATA_DIR="postgres_data/data"
-        DATA_DIR = Path(os.getenv("DATA_DIR", "/data"))
-        DATA_DIR.mkdir(parents=True, exist_ok=True)  # create the folder (and any missing parents) if it doesn’t exist; don’t error if it already exists
+        if response.status_code != 200:
+            print(f"Something went wrong, I couldn't fetch the requested WB topics /ᐠ-˕-マ. Error status code: {response.status_code}.")
+            print(response.content)
+            return []
 
-        out_path = DATA_DIR / "wb_all_countries_multi_indicators.csv"
+        print(".... API request approved! Collecting all WB umbrella topics .... (•˕•マ.ᐟ \n")
+        wb_topics = response.json()[1]
 
-        if response.status_code == 200:
-            out_path.write_bytes(response.content)
+        topics_df = pd.DataFrame([
+            {
+                "topic_id": topic["id"], # []: mandatory fields - strict dict access -> it doesn’t exist, Python raises a KeyError
+                "topic_name": topic["value"],
+                "description": topic["sourceNote"]
+            } for topic in wb_topics
+        ])
+        # enforce types
+        topics_df["topic_id"] = topics_df["topic_id"].astype(int)
 
-            print(f"Saved → {out_path}")
+        print("Topics df shape:", topics_df.shape)
+        print("\nFirst five rows of the topics df:\n", topics_df.head())
+        print("\nInfo of the WB topics df:\n", topics_df.info(), "\n")
+        print(f"\n--- {len(topics_df)} WB topics have been collected!  --- ദ്ദി（• ˕ •マ.ᐟ\n")
 
-            df = pd.read_csv("wb_all_countries_multi_indicators.csv")
-            print(df.head())
+        # turn the df into a list of tuples for saving into the db later
+        wb_topics_db = topics_df.replace({np.nan: None})  # replace NaN with None for postgreSQL
+        wb_topics_rows = list(wb_topics_db.itertuples(index = False, name = None))  # convert to list of tuples in correct column order
 
-        else:
-            print(f"Something went wrong, I couldn't fetch the requested data /ᐠ-˕-マ. Error status code: {response.status_code}.")
+        return wb_topics_rows
 
     except requests.exceptions.RequestException as e:
         print(f"Something went wrong ૮₍•᷄  ༝ •᷅₎ა --> Error message: {type(e).__name__} - {e}.")
-"""
+
+def get_all_wb_indicators():
+    """
+    this function fetch all World Bank indicators
+    :return: World Bank indicators
+    """
+    try:
+        url = "https://api.worldbank.org/v2/source/2/indicators?format=json&per_page=20000"
+        response = requests.get(url, timeout = 5)
+        print("\nQueried URL (for getting all WB indicators):", response.url, "\n")
+
+        if response.status_code != 200:
+            print(f"Something went wrong, I couldn't fetch the requested WB indicators /ᐠ-˕-マ. Error status code: {response.status_code}.")
+            print(response.content)
+            return []
+
+        print(".... API request approved! Collecting all WB indicators .... (•˕•マ.ᐟ \n")
+        wb_indicators = response.json()[1]
+
+        indicators_df = pd.DataFrame([
+            {
+                "indicator_id": indicator["id"], # []: mandatory fields - strict dict access -> it doesn’t exist, Python raises a KeyError
+                "indicator_name": indicator["name"],
+                "source_id": indicator["source"]["id"],
+                "source_name": indicator["source"]["value"],
+                "source_organisation": indicator.get("sourceOrganization"), # get(): optional fields - safe dict access -> return the value if the key exists, return None (or a custom default) if the key is missing
+                "description": indicator.get("sourceNote"),
+                "topics": indicator["topics"]
+            } for indicator in wb_indicators
+        ])
+        # enforce types
+        indicators_df["source_id"] = indicators_df["source_id"].astype(int)
+
+        print("Indicator info df shape:", indicators_df.shape)
+        print("\nFirst five rows of the indicators df:\n", indicators_df.head())
+        print(indicators_df.info())
+        print(f"\n--- {len(indicators_df)} WB indicators have been collected!  --- ദ്ദി（• ˕ •マ.ᐟ\n")
+
+        # turn the df into a list of tuples and drop columns which violates 3NF for saving into the db later
+        wb_indicators_db = indicators_df.replace({np.nan: None})  # replace NaN with None for postgreSQL
+        wb_indicators_rows = list(
+            wb_indicators_db
+            .drop(columns = ["source_name", "source_organisation", "topics"])
+            .itertuples(index = False, name = None)
+        )
+
+        # list of all indicator ids for looping later
+        indicator_ids = indicators_df["indicator_id"].unique().tolist()
+
+        # build a normalised sources table (PK: source_id)
+        wb_sources_df = (
+            indicators_df[["source_id", "source_name", "source_organisation"]]
+            .drop_duplicates()
+            .replace({np.nan: None})
+        )
+        # convert to list of tuples
+        wb_sources_rows = list(wb_sources_df.itertuples(index=False, name=None))
+
+        # get the indicator-topic list, and flatten the nested list of topics per indicator
+        indicator_topics_rows = []
+        for _, row in indicators_df.iterrows(): # _ ignore the numeric index, and iterrows() iterates over each row of the DataFrame
+            indicator_id = row["indicator_id"]
+            for topic in row["topics"]:
+                topic_id = int(topic.get("id"))
+                indicator_topics_rows.append([indicator_id, topic_id])
+
+        return wb_indicators_rows, indicator_ids, wb_sources_rows, indicator_topics_rows
+
+    except requests.exceptions.RequestException as e:
+        print(f"Something went wrong ૮₍•᷄  ༝ •᷅₎ა --> Error message: {type(e).__name__} - {e}.")
+
+# csv data
+#     try:
+#         url = "https://api.worldbank.org/v2/country/all/indicator/SP.POP.TOTL;NY.GDP.MKTP.KD.ZG;FP.CPI.TOTL.ZG;SL.UEM.TOTL.ZS;CC.EST?per_page=20000&format=csv" # indicators:  | NY.GDP.MKTP.KD.ZG: GDP growth | CC.EST: corruption info
+#         response = requests.get(url, timeout=5)
+#         print("\nQueried URL:", response.url, "\n")
+#
+#         # if running inside Docker -> keep this as /data
+#         # if running locally outside Docker -> set DATA_DIR="postgres_data/data"
+#         DATA_DIR = Path(os.getenv("DATA_DIR", "/data"))
+#         DATA_DIR.mkdir(parents=True, exist_ok=True)  # create the folder (and any missing parents) if it doesn’t exist; don’t error if it already exists
+#
+#         out_path = DATA_DIR / "wb_all_countries_multi_indicators.csv"
+#
+#         if response.status_code == 200:
+#             out_path.write_bytes(response.content)
+#
+#             print(f"Saved → {out_path}")
+#
+#             df = pd.read_csv("wb_all_countries_multi_indicators.csv")
+#             print(df.head())
+#
+#         else:
+#             print(f"Something went wrong, I couldn't fetch the requested data /ᐠ-˕-マ. Error status code: {response.status_code}.")
+#
+#     except requests.exceptions.RequestException as e:
+#         print(f"Something went wrong ૮₍•᷄  ༝ •᷅₎ა --> Error message: {type(e).__name__} - {e}.")
 
 #######################################
 # Save / persist to db
@@ -285,6 +389,90 @@ class ApiDB(DBPostgres):
         except (Exception, psycopg.DatabaseError) as e:
             raise DatabaseError(f"Something went wrong with getting the country info of '{', '.join(country_names)}'. Error type: {type(e).__name__}, error message: '{e}'.")
 
+    def add_data_to_wb_topics_table(self, data: list, table_name: str = "wb_topics"):
+        """persist normalised acquired data into db"""
+        if not data:
+            print("There is no normalised API-data to add to the database. /ᐠ-˕-マ")
+            return
+
+        query = sql.SQL("""
+                        INSERT INTO {} (topic_id, topic_name, description)
+                        VALUES (%s, %s, %s)
+                        ON CONFLICT (topic_id) DO NOTHING;
+                        """).format(sql.Identifier(table_name))
+        # on conflict do nothing to prevent throwing errors and creating duplicates
+
+        try:
+            self._executemany(query, data)
+            self.connection.commit()
+            print(f"Successfully added or updated {len(data)} normalised rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ\n")
+        except (Exception, psycopg.DatabaseError) as e:
+            self.connection.rollback()
+            raise DatabaseError(f"Something went wrong with adding the normalised API-data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
+
+    def add_data_to_wb_indicators_table(self, data: list, table_name: str = "wb_indicators"):
+        """persist normalised acquired data into db"""
+        if not data:
+            print("There is no normalised API-data to add to the database. /ᐠ-˕-マ")
+            return
+
+        query = sql.SQL("""
+                        INSERT INTO {} (indicator_id, indicator_name, source_id, description)
+                        VALUES (%s, %s, %s, %s)
+                        ON CONFLICT (indicator_id) DO NOTHING;
+                        """).format(sql.Identifier(table_name))
+        # on conflict do nothing to prevent throwing errors and creating duplicates
+
+        try:
+            self._executemany(query, data)
+            self.connection.commit()
+            print(f"Successfully added or updated {len(data)} normalised rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ\n")
+        except (Exception, psycopg.DatabaseError) as e:
+            self.connection.rollback()
+            raise DatabaseError(f"Something went wrong with adding the normalised API-data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
+
+    def add_data_to_wb_indicator_topics_table(self, data: list, table_name: str = "wb_indicator_topics"):
+        """persist normalised acquired data into db"""
+        if not data:
+            print("There is no normalised API-data to add to the database. /ᐠ-˕-マ")
+            return
+
+        query = sql.SQL("""
+                        INSERT INTO {} (indicator_id, topic_id)
+                        VALUES (%s, %s)
+                        ON CONFLICT (indicator_id, topic_id) DO NOTHING;
+                        """).format(sql.Identifier(table_name))
+        # on conflict do nothing to prevent throwing errors and creating duplicates
+
+        try:
+            self._executemany(query, data)
+            self.connection.commit()
+            print(f"Successfully added or updated {len(data)} normalised rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ\n")
+        except (Exception, psycopg.DatabaseError) as e:
+            self.connection.rollback()
+            raise DatabaseError(f"Something went wrong with adding the normalised API-data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
+
+    def add_data_to_wb_source_table(self, data: list, table_name: str = "wb_source"):
+        """persist normalised acquired data into db"""
+        if not data:
+            print("There is no normalised API-data to add to the database. /ᐠ-˕-マ")
+            return
+
+        query = sql.SQL("""
+                        INSERT INTO {} (source_id, source_name, source_organisation)
+                        VALUES (%s, %s, %s)
+                        ON CONFLICT (source_id) DO NOTHING;
+                        """).format(sql.Identifier(table_name))
+        # on conflict do nothing to prevent throwing errors and creating duplicates
+
+        try:
+            self._executemany(query, data)
+            self.connection.commit()
+            print(f"Successfully added or updated {len(data)} normalised rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ\n")
+        except (Exception, psycopg.DatabaseError) as e:
+            self.connection.rollback()
+            raise DatabaseError(f"Something went wrong with adding the normalised API-data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
+
 #######################################
 # Run the API requests
 #######################################
@@ -361,6 +549,14 @@ if __name__ == "__main__":
     ]
     # unresolved: ("Serbia and Montenegro", ""), ("Taiwan", "TWN"), ("FR Yugoslavia", "YUG"), and ("Congo", "COG / COD")
     wb_api_db.add_data_to_country_alias_table(other_country_aliases)
+
+    wb_topics_rows = get_all_wb_topics()
+    wb_indicators_rows, indicator_ids, wb_sources_rows, indicator_topics_rows = get_all_wb_indicators()
+
+    wb_api_db.add_data_to_wb_topics_table(wb_topics_rows)
+    wb_api_db.add_data_to_wb_indicators_table(wb_indicators_rows)
+    wb_api_db.add_data_to_wb_indicator_topics_table(indicator_topics_rows)
+    wb_api_db.add_data_to_wb_source_table(wb_sources_rows)
 
     wb_api_db.close_connection()
 
