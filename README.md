@@ -117,3 +117,26 @@ docker compose up --build
   1. db starts --> healthcheck runs
   2. app_db_test --> runs integration tests
   3. if all tests pass --> api_logger and web_logger containers start ₍^. .^₎⟆
+
+## How to access to the database using pgAdmin4
+- Step 1: install pgAdmin4 (if applicable)
+- Step 2: open pgAdmin4 -> right click on 'Servers' -> Register -> Server
+- Step 3: on the 'General' tab:
+  - Name: anything goes (e.g. 'Katzi')
+- Step 4: on the 'Connection' tab:
+  - Host name/address: localhost
+  - Port: 5555
+  - Maintenance database: worldbank
+  - Username: user
+  - Password: katzi
+    - Save password? > Yes for peace of mind later
+- Step 5: 
+  - > Servers -> miniproject 
+    - > Databases -> worldbank 
+      - > Schemas -> thi_miniproject
+        - > Tables -> right click 'Refresh' -> Query Tool
+- Step 6: type this in the pop-up Query window:
+```
+SET search_path TO thi_miniproject;
+```
+then have fun ദ്ദി/ᐠ｡‸｡ᐟ\ !!
