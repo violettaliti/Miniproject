@@ -4,9 +4,10 @@ services:
   app_base:
     build: .
     volumes:
-      - ./src/:/app
+      - ./:/app
       - ./postgres_data/data:/data
     environment:
+      PYTHONPATH: /app # so 'src' is importable
       DB_HOST: db # use 'db' inside docker container, 'localhost' outside (e.g. in locally installed apps such as pgAdmin) - here it's for inside the container so it's hardcoded with 'db'
       DB_PORT: 5432 # use 5555 for locally installed apps such as pgAdmin, 5432 for inside the docker container
       DB_NAME: ${POSTGRES_DB:-worldbank} # ${VAR:-default}: use the var from .env if available, otherwise use this default value
@@ -22,23 +23,40 @@ services:
     networks:
       - miniproject_network
 
-  app_api_logger: # benefit compared to putting both api_logger and web_logger in one service: parallel processing
+  app_db_test: # to run the unittests before api_logger and web_logger containers, testing the db connection etc. first
     extends: # inherit from the app_base service
       service: app_base
-    container_name: api_logger
-    command: python /app/api_logger.py
+    container_name: api_db_test
+    command: python -m unittest -v src.tests.test_save_data
     depends_on:
       db:
         condition: service_healthy
+    # mark this service as completed after exit code 0
+    restart: "no"
+
+  app_api_logger: # benefit compared to putting both api_logger and web_logger in one service: parallel processing
+    extends:
+      service: app_base
+    container_name: api_logger
+    command: python /app/src/api_logger.py
+    depends_on:
+      # run after db connection is set up
+      db:
+        condition: service_healthy
+      # run after app_db_test finishes running
+      app_db_test:
+        condition: service_completed_successfully
 
   app_web_logger:
     extends:
       service: app_base
     container_name: web_logger
-    command: python /app/web_logger.py
+    command: python /app/src/web_logger.py
     depends_on:
       db:
         condition: service_healthy
+      app_db_test:
+        condition: service_completed_successfully
 
   # postgres database for exporting / storing the postgres_data
   db:
