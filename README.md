@@ -62,8 +62,9 @@ miniproject/
 └─ postgres_data/
    ├─ db/ # actual database files (postgres storage)
    ├─ data/ # for storing CSVs if needed
+   ├─ queries.sql # pre-written sql queries (SELECT statements) for exploring the db
    └─ init/
-     └─ schema.sql # DDL in 3NF
+     └─ schema.sql # DDL in 3NF, triggers, functions, procedures etc.
 ```
 ## Project concept
 - How is the chosen API used?
