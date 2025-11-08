@@ -53,7 +53,7 @@ def get_country_general_info():
 
         # turn the df into a list of tuples for saving into the db later
         country_info_db = country_info_df.replace({np.nan: None}) # replace NaN with None for postgreSQL
-        country_rows = list(country_info_db.itertuples(index=False, name=None)) # convert to list of tuples in correct column order
+        country_rows = list(country_info_db.itertuples(index=False, name=None))
 
         return country_rows
 
@@ -90,14 +90,70 @@ def get_all_wb_topics():
 
         print("Topics df shape:", topics_df.shape)
         print("\nFirst five rows of the topics df:\n", topics_df.head())
-        print("\nInfo of the WB topics df:\n", topics_df.info(), "\n")
+        print(topics_df.info())
         print(f"\n--- {len(topics_df)} WB topics have been collected!  --- ദ്ദി（• ˕ •マ.ᐟ\n")
 
         # turn the df into a list of tuples for saving into the db later
         wb_topics_db = topics_df.replace({np.nan: None})  # replace NaN with None for postgreSQL
-        wb_topics_rows = list(wb_topics_db.itertuples(index = False, name = None))  # convert to list of tuples in correct column order
+        wb_topics_rows = list(wb_topics_db.itertuples(index = False, name = None))
 
         return wb_topics_rows
+
+    except requests.exceptions.RequestException as e:
+        print(f"Something went wrong ૮₍•᷄  ༝ •᷅₎ა --> Error message: {type(e).__name__} - {e}.")
+
+def yes_no_to_bool(x):
+    if isinstance(x, str):
+        x = x.strip().upper()
+        if x == "Y":
+            return True
+        if x == "N":
+            return False
+    return None  # for None, "", or other unexpected cases
+
+def get_all_wb_sources():
+    """
+    this function fetch all World Bank sources (71 in total)
+    :return: World Bank sources
+    """
+    try:
+        url = "https://api.worldbank.org/v2/source?format=json&per_page=500"
+        response = requests.get(url, timeout = 5)
+        print("\nQueried URL (for getting all WB sources):", response.url, "\n")
+
+        if response.status_code != 200:
+            print(f"Something went wrong, I couldn't fetch the requested WB sources /ᐠ-˕-マ. Error status code: {response.status_code}.")
+            print(response.content)
+            return []
+
+        print(".... API request approved! Collecting all WB sources .... (•˕•マ.ᐟ \n")
+        wb_sources = response.json()[1]
+
+        sources_df = pd.DataFrame([
+            {
+                "source_id": int(source["id"]),
+                "source_name": source["name"],
+                "source_code": source.get("code"),
+                "data_availability": source.get("dataavailability"),
+                "metadata_availability": source.get("metadataavailability"),
+                "concepts": int(source.get("concepts")),
+                "last_updated": source.get("lastupdated")
+            } for source in wb_sources
+        ])
+
+        for col in ["data_availability", "metadata_availability"]:
+            sources_df[col] = sources_df[col].apply(yes_no_to_bool)
+
+        print("Sources df shape:", sources_df.shape)
+        print("\nFirst five rows of the sources df:\n", sources_df.head())
+        print(sources_df.info())
+        print(f"\n--- {len(sources_df)} WB sources have been collected!  --- ദ്ദി（• ˕ •マ.ᐟ\n")
+
+        # turn the df into a list of tuples for saving into the db later
+        wb_sources_db = sources_df.replace({np.nan: None})  # replace NaN with None for postgreSQL
+        wb_sources_rows = list(wb_sources_db.itertuples(index = False, name = None))
+
+        return wb_sources_rows
 
     except requests.exceptions.RequestException as e:
         print(f"Something went wrong ૮₍•᷄  ༝ •᷅₎ა --> Error message: {type(e).__name__} - {e}.")
@@ -125,8 +181,6 @@ def get_all_wb_indicators():
                 "indicator_id": indicator["id"], # []: mandatory fields - strict dict access -> it doesn’t exist, Python raises a KeyError
                 "indicator_name": indicator["name"],
                 "source_id": indicator["source"]["id"],
-                "source_name": indicator["source"]["value"],
-                "source_organisation": indicator.get("sourceOrganization"), # get(): optional fields - safe dict access -> return the value if the key exists, return None (or a custom default) if the key is missing
                 "description": indicator.get("sourceNote"),
                 "topics": indicator["topics"]
             } for indicator in wb_indicators
@@ -139,25 +193,12 @@ def get_all_wb_indicators():
         print(indicators_df.info())
         print(f"\n--- {len(indicators_df)} WB indicators have been collected!  --- ദ്ദി（• ˕ •マ.ᐟ\n")
 
-        # turn the df into a list of tuples and drop columns which violates 3NF for saving into the db later
+        # turn the df into a list of tuples and drop column 'topics' which violates 3NF for saving into the db later
         wb_indicators_db = indicators_df.replace({np.nan: None})  # replace NaN with None for postgreSQL
-        wb_indicators_rows = list(
-            wb_indicators_db
-            .drop(columns = ["source_name", "source_organisation", "topics"])
-            .itertuples(index = False, name = None)
-        )
+        wb_indicators_rows = list(wb_indicators_db.drop(columns = ["topics"]).itertuples(index = False, name = None))
 
         # list of all indicator ids for looping later
         indicator_ids = indicators_df["indicator_id"].unique().tolist()
-
-        # build a normalised sources table (PK: source_id)
-        wb_sources_df = (
-            indicators_df[["source_id", "source_name", "source_organisation"]]
-            .drop_duplicates()
-            .replace({np.nan: None})
-        )
-        # convert to list of tuples
-        wb_sources_rows = list(wb_sources_df.itertuples(index=False, name=None))
 
         # get the indicator-topic list, and flatten the nested list of topics per indicator
         indicator_topics_rows = []
@@ -167,7 +208,7 @@ def get_all_wb_indicators():
                 topic_id = int(topic.get("id"))
                 indicator_topics_rows.append([indicator_id, topic_id])
 
-        return wb_indicators_rows, indicator_ids, wb_sources_rows, indicator_topics_rows
+        return wb_indicators_rows, indicator_ids, indicator_topics_rows
 
     except requests.exceptions.RequestException as e:
         print(f"Something went wrong ૮₍•᷄  ༝ •᷅₎ა --> Error message: {type(e).__name__} - {e}.")
@@ -410,6 +451,27 @@ class ApiDB(DBPostgres):
             self.connection.rollback()
             raise DatabaseError(f"Something went wrong with adding the normalised API-data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
 
+    def add_data_to_wb_source_table(self, data: list, table_name: str = "wb_source"):
+        """persist normalised acquired data into db"""
+        if not data:
+            print("There is no normalised API-data to add to the database. /ᐠ-˕-マ")
+            return
+
+        query = sql.SQL("""
+                        INSERT INTO {} (source_id, source_name, source_code, data_availability, metadata_availability, concepts, last_updated)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT (source_id) DO NOTHING;
+                        """).format(sql.Identifier(table_name))
+        # on conflict do nothing to prevent throwing errors and creating duplicates
+
+        try:
+            self._executemany(query, data)
+            self.connection.commit()
+            print(f"Successfully added or updated {len(data)} normalised rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ\n")
+        except (Exception, psycopg.DatabaseError) as e:
+            self.connection.rollback()
+            raise DatabaseError(f"Something went wrong with adding the normalised API-data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
+
     def add_data_to_wb_indicators_table(self, data: list, table_name: str = "wb_indicators"):
         """persist normalised acquired data into db"""
         if not data:
@@ -441,27 +503,6 @@ class ApiDB(DBPostgres):
                         INSERT INTO {} (indicator_id, topic_id)
                         VALUES (%s, %s)
                         ON CONFLICT (indicator_id, topic_id) DO NOTHING;
-                        """).format(sql.Identifier(table_name))
-        # on conflict do nothing to prevent throwing errors and creating duplicates
-
-        try:
-            self._executemany(query, data)
-            self.connection.commit()
-            print(f"Successfully added or updated {len(data)} normalised rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ\n")
-        except (Exception, psycopg.DatabaseError) as e:
-            self.connection.rollback()
-            raise DatabaseError(f"Something went wrong with adding the normalised API-data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
-
-    def add_data_to_wb_source_table(self, data: list, table_name: str = "wb_source"):
-        """persist normalised acquired data into db"""
-        if not data:
-            print("There is no normalised API-data to add to the database. /ᐠ-˕-マ")
-            return
-
-        query = sql.SQL("""
-                        INSERT INTO {} (source_id, source_name, source_organisation)
-                        VALUES (%s, %s, %s)
-                        ON CONFLICT (source_id) DO NOTHING;
                         """).format(sql.Identifier(table_name))
         # on conflict do nothing to prevent throwing errors and creating duplicates
 
@@ -551,12 +592,14 @@ if __name__ == "__main__":
     wb_api_db.add_data_to_country_alias_table(other_country_aliases)
 
     wb_topics_rows = get_all_wb_topics()
-    wb_indicators_rows, indicator_ids, wb_sources_rows, indicator_topics_rows = get_all_wb_indicators()
-
     wb_api_db.add_data_to_wb_topics_table(wb_topics_rows)
+
+    wb_sources_rows = get_all_wb_sources()
+    wb_api_db.add_data_to_wb_source_table(wb_sources_rows)
+
+    wb_indicators_rows, indicator_ids, indicator_topics_rows = get_all_wb_indicators()
     wb_api_db.add_data_to_wb_indicators_table(wb_indicators_rows)
     wb_api_db.add_data_to_wb_indicator_topics_table(indicator_topics_rows)
-    wb_api_db.add_data_to_wb_source_table(wb_sources_rows)
 
     wb_api_db.close_connection()
 
