@@ -764,6 +764,12 @@ if __name__ == "__main__":
         ('Turkiye', 'TUR'),
         ('Turkey', 'TUR'),
         ('Hong Kong', 'HKG'),
+        ('Hong Kong SAR of China', 'HKG'),
+        ("Republic of Korea", "KOR"),
+        ("Republic of Moldova", "MDA"),
+        ("DR Congo", "COD"),
+        ("North Cyprus", "CYP"),
+        ("Somaliland Region", "SOM"),
         ("Venezuela", "VEN"),
         ("South Korea", "KOR"),
         ("Vietnam", "VNM"),
@@ -793,7 +799,7 @@ if __name__ == "__main__":
         ("Puerto Rico", "PRI"),
         ("Palestine", "PSE")
     ]
-    # unresolved: ("Serbia and Montenegro", ""), ("Taiwan", "TWN"), ("FR Yugoslavia", "YUG"), and ("Congo", "COG / COD")
+    # unresolved: ("Serbia and Montenegro", ""), ("State of Palestine", ""), ("Taiwan", "TWN"), ("Taiwan Province of China", "TWN"), ("FR Yugoslavia", "YUG"), and ("Congo", "COG / COD")
     wb_api_db.add_data_to_country_alias_table(other_country_aliases)
 
     wb_topics_rows = get_all_wb_topics()
@@ -808,11 +814,11 @@ if __name__ == "__main__":
 
     # threaded fetch + main-thread streaming inserts
     max_workers = int(os.getenv("WB_MAX_WORKERS", "8"))
-    q = Queue(maxsize=16) # backpressure to keep memory in check
+    q = Queue(maxsize = 16) # backpressure to keep memory in check
     stop = Event()
 
     # start producers (fetchers)
-    with ThreadPoolExecutor(max_workers=max_workers) as ex:
+    with ThreadPoolExecutor(max_workers = max_workers) as ex:
         futures = [
             ex.submit(_producer_fetch_indicator, ind, q, stop, country_iso3codes, None)
             for ind in indicator_ids
@@ -820,7 +826,7 @@ if __name__ == "__main__":
 
         finished = 0
         total_rows = 0
-        with tqdm(desc="DB inserts", unit="rows") as pbar:
+        with tqdm(desc = "DB inserts", unit = "rows") as pbar:
             while finished < len(futures):
                 indicator, df_chunk = q.get()
                 if df_chunk is None:

@@ -6,7 +6,7 @@ Thi Hoang | 10-11/2025
 
 To carry out a mini project and datapipeline using `APIs`, `web scraping`, `Docker`, `Git`, databases (`PostgreSQL`, `pgAdmin4`) and data visualisation tool (`Power BI`).
 
-**Topic**: country data and trends over the years from World Bank API and other data sources such as Transparency International (Corruption Perception Index), World Happiness Report.
+**Topic**: global development facts and trends - country data and trends over the years from World Bank API and other data sources such as Transparency International (Corruption Perception Index), World Happiness Report.
 
 *Why?*
 - Cause I'm an economist by training (gotta stay somewhat connected to my roots ദ്ദി/ᐠ｡‸｡ᐟ\ ...).
@@ -32,7 +32,6 @@ To carry out a mini project and datapipeline using `APIs`, `web scraping`, `Dock
   - [ ] Extend / update relational database schema
   - [X] Extend database with the additional data acquired from extended API requests and web-scraping - 1
   - [ ] Extend database with the additional data acquired from extended API requests and web-scraping - 2
-  - [ ] Initial advanced relational database schema (star / galaxy schemas)
 - [X] Unittests for save_data.py
 - [ ] Clean, transform and export data for visualisation ❯❯ `Power BI` 
 - [ ] Connect `Power BI` to `PostgreSQL` database container
@@ -52,6 +51,9 @@ miniproject/
 ├─ requirements.txt
 ├─ docker-compose.yml
 ├─ Dockerfile
+├─ data_visualisation/
+│  ├─ thi_miniproject_dashboard.pbix
+│  └─ visuals_analysis.pdf
 ├─ src/
 │  ├─ __init__.py
 │  ├─ api_logger.py # APIs (requests)
@@ -130,9 +132,9 @@ docker compose up --build
 ```
 
 *which will both build the docker image, run and open the following containers:*
-  1. db starts --> healthcheck runs
-  2. app_db_test --> runs integration ```unittests```
-  3. if all tests pass --> ```api_logger.py``` and ```web_logger.py``` containers start ₍^. .^₎⟆
+  1. database container ```db``` starts --> healthcheck runs
+  2. healthcheck ok ('service_healthy') --> ```app_db_test``` runs integration ```unittests```
+  3. if all tests pass --> python loaders / containers ```app_api_logger``` and ```app_web_logger``` start ₍^. .^₎⟆
 
 ## How to access to the database using pgAdmin4
 - Step 1: install ```pgAdmin4``` (if applicable)

@@ -7,6 +7,17 @@ SELECT * FROM year;
 SELECT * FROM country_alias;
 
 ------------------------------------------------------------------
+-- DQL overview
+------------------------------------------------------------------
+-- show all tables (both main and staging tables), and views, and their respective row counts (order by row count DESC)
+SELECT schemaname, 
+	relname AS table_name, 
+	n_live_tup AS row_estimate
+FROM pg_stat_user_tables
+WHERE schemaname = 'thi_miniproject'
+ORDER BY row_estimate DESC;
+
+------------------------------------------------------------------
 -- Data from WorldBank API requests
 ------------------------------------------------------------------
 ---- staging tables ----
@@ -22,7 +33,7 @@ SELECT * FROM wb_indicator_topics;
 SELECT * FROM wb_indicator_country_year_value; 
 
 ---- example dql queries ----
--- 1/.
+-- 1/. general info of a specific country
 SELECT * FROM country_general_info
 	WHERE country_name ILIKE '%china%';
 
@@ -78,6 +89,21 @@ JOIN thi_miniproject.wb_indicator_country_year_value AS v
 GROUP BY i.indicator_id, i.indicator_name
 ORDER BY indicator_rank;
 
+-- 8/. indicators grouped by specific topics
+SELECT
+    t.topic_id,
+    t.topic_name,
+    i.indicator_id,
+    i.indicator_name,
+    i.description AS indicator_description
+FROM thi_miniproject.wb_indicator_topics AS it
+JOIN thi_miniproject.wb_topics AS t
+    ON t.topic_id = it.topic_id
+JOIN thi_miniproject.wb_indicators AS i
+    ON i.indicator_id = it.indicator_id
+WHERE t.topic_id IN (3, 4, 6, 7, 8, 10, 11, 14, 15, 17, 18, 19)
+ORDER BY it.topic_id, i.indicator_name;
+
 ------------------------------------------------------------------
 -- Data from web scraping (e.g. Corruption Perception Index & World Happiness Report)
 ------------------------------------------------------------------
@@ -129,6 +155,29 @@ WITH norm AS (
   SELECT r.*,
          unaccent(lower(trim(r.country_name))) AS nname
   FROM thi_miniproject.staging_cpi_raw r
+)
+SELECT n.country_name, COUNT(*) AS rows_unmatched
+FROM norm n
+LEFT JOIN thi_miniproject.country_general_info c
+  ON unaccent(lower(trim(c.country_name))) = n.nname
+LEFT JOIN thi_miniproject.country_alias a
+  ON unaccent(lower(trim(a.country_name_alias))) = n.nname
+WHERE c.country_iso3code IS NULL AND a.country_iso3code IS NULL
+GROUP BY n.country_name
+ORDER BY rows_unmatched DESC;
+
+SELECT * FROM staging_world_happiness_report;
+SELECT * FROM world_happiness_report;
+
+-- WHR - quick count comparison
+SELECT (SELECT COUNT(*) FROM thi_miniproject.staging_world_happiness_report) AS staging_count,
+       (SELECT COUNT(*) FROM thi_miniproject.world_happiness_report) AS final_count;
+
+-- WHR - unmatched names (not resolvable by alias or canonical name)
+WITH norm AS (
+  SELECT r.*,
+         unaccent(lower(trim(r.country_name))) AS nname
+  FROM thi_miniproject.staging_world_happiness_report r
 )
 SELECT n.country_name, COUNT(*) AS rows_unmatched
 FROM norm n
