@@ -121,14 +121,14 @@ miniproject/
 - ```Power BI```
 
 ## How to start the project using Docker Compose
-- Step 1: open the project's folder and copy the folder's path
-- Step 2: open the host (your laptop)'s terminal, go to the project's folder using its path
-- Step 3: run the following command in your terminal
+Clone this repository, go to its folder, and launch docker compose:
 ```
+git clone https://github.com/violettaliti/Miniproject.git
+cd Miniproject
 docker compose up --build
 ```
 
-*which will both build the docker image, run and open the following containers:*
+*which will both build the docker image, run and open these containers in the following order:*
   1. database container ```db``` starts --> healthcheck runs
   2. healthcheck ok ('service_healthy') --> ```app_db_test``` runs integration ```unittests```
   3. if all tests pass --> python loaders / containers ```app_api_logger``` and ```app_web_logger``` start ₍^. .^₎⟆
