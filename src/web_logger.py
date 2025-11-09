@@ -242,7 +242,6 @@ class WebDB(DBPostgres):
 
         try:
             self._executemany(query, data)
-            self.connection.commit()
             print(f"Successfully added or updated {len(data)} raw rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ")
         except (Exception, psycopg.DatabaseError) as e:
             self.connection.rollback()
