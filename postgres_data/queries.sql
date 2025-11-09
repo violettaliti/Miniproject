@@ -19,7 +19,7 @@ SELECT * FROM wb_source;
 SELECT * FROM wb_topics;
 SELECT * FROM wb_indicators;
 SELECT * FROM wb_indicator_topics;
-SELECT * FROM wb_indicator_country_year_value;
+SELECT * FROM wb_indicator_country_year_value; 
 
 ---- example dql queries ----
 -- 1/.
@@ -47,15 +47,47 @@ GROUP BY s.source_id, s.source_name
 -- 4/. indicators have gdp in their name
 SELECT * FROM wb_indicators
 	WHERE indicator_name ILIKE '%gdp%';
-	
+
+-- 5/. total row count for each indicator in the selected indicators list
+SELECT i.indicator_id, i.indicator_name, COUNT(*) AS total_row_count
+FROM wb_indicator_country_year_value AS fact
+JOIN wb_indicators AS i
+	ON i.indicator_id = fact.indicator_id
+WHERE fact.indicator_id IN ('SP.POP.TOTL', 'NY.GDP.PCAP.CD', 'NY.GDP.MKTP.KD.ZG')
+GROUP BY i.indicator_id;
+
+-- 6/. indicators ranked according to total_topics_count
+SELECT it.indicator_id,
+       i.indicator_name,
+       COUNT(*) AS topic_count
+FROM thi_miniproject.wb_indicator_topics it
+JOIN thi_miniproject.wb_indicators i
+  ON i.indicator_id = it.indicator_id
+GROUP BY it.indicator_id, i.indicator_name
+ORDER BY topic_count DESC, it.indicator_id;
+
+-- 7/. rank indicators by total data coverage
+SELECT
+    i.indicator_id,
+    i.indicator_name,
+    COUNT(v.*) AS total_rows,
+    RANK() OVER (ORDER BY COUNT(v.*) DESC) AS indicator_rank
+FROM thi_miniproject.wb_indicators AS i
+JOIN thi_miniproject.wb_indicator_country_year_value AS v
+    ON i.indicator_id = v.indicator_id
+GROUP BY i.indicator_id, i.indicator_name
+ORDER BY indicator_rank;
+
 ------------------------------------------------------------------
--- Data from web scraping (e.g. Corruption Perception Index)
+-- Data from web scraping (e.g. Corruption Perception Index & World Happiness Report)
 ------------------------------------------------------------------
 ---- staging tables ----
 SELECT * FROM staging_cpi_raw;
+SELECT * FROM staging_world_happiness_report;
 
 ---- main tables ----
 SELECT * FROM corruption_perception_index;
+SELECT * FROM world_happiness_report;
 
 ---- views ----
 SELECT * FROM thi_miniproject.v_cpi_with_region;

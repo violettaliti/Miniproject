@@ -1,12 +1,16 @@
 # imports
 import os # part of python standard library -> no need to add to requirements.txt
+import time # part of python standard library
 import requests
 from save_data import DBPostgres, DatabaseError
 import psycopg
 from psycopg import sql
 import pandas as pd
 import numpy as np
-import time # part of python standard library
+from tqdm.auto import tqdm
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from queue import Queue
+from threading import Event
 
 headers_default = {
     "User-Agent": (
@@ -206,13 +210,15 @@ def get_all_wb_indicators(source_ids_list):
         wb_indicators_rows: list of tuples for DB insert into wb_indicators
         indicator_ids: list of all unique indicator IDs
         indicator_topics_rows: list of (indicator_id, topic_id)
+        failed_sources, no_data_sources: lists of sources which failed to be collected or have no data
     """
     all_indicators_df = []
     failed_sources = []
     no_data_sources = []
     print(f"\n ... Fetching indicators from {len(source_ids_list)} WB sources ...\n")
 
-    for source_id in source_ids_list:
+    # tqdm wraps the iterable, one tick per source
+    for source_id in tqdm(source_ids_list, desc = "WB sources", unit = "src"):
         url = f"https://api.worldbank.org/v2/source/{source_id}/indicators?format=json&per_page=20000"
         print(f"\n... Querying source ID {source_id}: {url} ... ₍^. .^₎Ⳋ\n")
 
@@ -282,71 +288,131 @@ def get_all_wb_indicators(source_ids_list):
             except (TypeError, ValueError):
                 continue
 
-    return wb_indicators_rows, indicator_ids, indicator_topics_rows, failed_sources
+    return wb_indicators_rows, indicator_ids, indicator_topics_rows, failed_sources, no_data_sources
 
-def get_indicator_allcountries(indicator_id: str, date: str | None = None, valid_country_iso3codes: list[str] | None = None):
+def get_indicator_allcountries(indicator_id: str, date: str | None = None, valid_country_iso3codes: list[str] | None = None, on_chunk = None): # on_chunck: callback(df_chunk) for streaming
     """
     this function requests data in JSON format
     wb api mixes real countries and aggregates / regions --> this function also filters by the list of country_iso3codes from the get_country_general_info()
     :return: tidy df: columns = ['indicator_id', 'country_iso3code', 'year', 'value'] (value is float or NaN)
+    if on_chunk is given, stream transformed page dfs to it, otherwise returns the concatenated df
     """
-    frames, page = [], 1
-    try:
-        while True:
-            # build url carefully so both date/no-date work with pagination
-            if date:
-                url_json = (f"{wb_api_base}/country/all/indicator/{indicator_id}"
-                            f"?date={date}&format=json&per_page=20000&page={page}")
-            else:
-                url_json = (f"{wb_api_base}/country/all/indicator/{indicator_id}"
-                            f"?format=json&per_page=20000&page={page}")
+    def _transform(df):
+        try:
+            # json uses keys: indicator{id}, countryiso3code, date, value
+            df["indicator_id"] = df["indicator"].apply(lambda x: (x or {}).get("id"))
+            df = df.rename(columns = {"countryiso3code": "country_iso3code"})
+            df["year"] = pd.to_numeric(df["date"], errors = "coerce").astype("Int64")
+            df["value"] = pd.to_numeric(df["value"], errors = "coerce")
 
-            response_js = _get_with_timeoff(url_json)
-            if response_js.status_code != 200:
-                break # only exiting this pagination loop
-            response_json = response_js.json()
-            if len(response_json) < 2 or not response_json[1]: # if the response has no data
-                break
-            meta, rows = response_json[0], response_json[1]
-            frames.append(pd.DataFrame(rows)) # append the current page of rows
-            if page >= int(meta.get("pages", 1)): # if "pages" == 3, and we’re currently on page == 3 --> stop looping
-                break
-            page += 1
+            if valid_country_iso3codes is not None:
+                before = len(df)
+                df = df[df["country_iso3code"].isin(valid_country_iso3codes)]
+                after = len(df)
+                print(f"\nFiltered out {before - after} region/aggregate rows for indicator {indicator_id}.")
+
+            print(f"Indicator {indicator_id}: collected {len(df)} country–year rows for the long fact table --- ദ്ദി（• ˕ •マ.ᐟ\n")
+            return df[["indicator_id", "country_iso3code", "year", "value"]]
+        except Exception as e:
+            print(f"... Post-processing failed for indicator {indicator_id}: {type(e).__name__} - {e}...\n")
+            return pd.DataFrame(columns = ["indicator_id", "country_iso3code", "year", "value"])
+
+    frames = []
+    try:
+        # first page (to learn page count)
+        if date:
+            url_json = (f"{wb_api_base}/country/all/indicator/{indicator_id}"
+                        f"?date={date}&format=json&per_page=20000&page=1")
+        else:
+            url_json = (f"{wb_api_base}/country/all/indicator/{indicator_id}"
+                        f"?format=json&per_page=20000&page=1")
+
+        response_json_1 = _get_with_timeoff(url_json)
+        if response_json_1.status_code != 200:
+            return pd.DataFrame(columns = ["indicator_id", "country_iso3code", "year", "value"])
+
+        response_1 = response_json_1.json()
+        if len(response_1) < 2 or not response_1[1]: # if the response has no data
+            return pd.DataFrame(columns=["indicator_id", "country_iso3code", "year", "value"])
+
+        meta, rows = response_1[0], response_1[1]
+        pages = int(meta.get("pages", 1))
+
+        # progress bar over pages
+        with tqdm(total = pages, desc = f"{indicator_id} pages", unit = "page", leave = False) as progress_bar:
+            df1 = _transform(pd.DataFrame(rows))
+            if on_chunk:
+                if not df1.empty:
+                    on_chunk(df1)
+            else:
+                frames.append(df1)
+
+            progress_bar.update(1) # we already fetched page 1
+
+            # fetch remaining pages 2 ... pages
+            for page in range(2, pages + 1):
+                if date:
+                    url_json = (f"{wb_api_base}/country/all/indicator/{indicator_id}"
+                                f"?date={date}&format=json&per_page=20000&page={page}")
+                else:
+                    url_json = (f"{wb_api_base}/country/all/indicator/{indicator_id}"
+                                f"?format=json&per_page=20000&page={page}")
+
+                response_js = _get_with_timeoff(url_json)
+                if response_js.status_code != 200:
+                    break
+                response_json = response_js.json()
+                if len(response_json) < 2 or not response_json[1]:
+                    break
+
+                dfi = _transform(pd.DataFrame(response_json[1]))
+                if on_chunk:
+                    if not dfi.empty:
+                        on_chunk(dfi)
+                else:
+                    frames.append(dfi)
+                progress_bar.update(1)
 
     except requests.exceptions.RequestException as e:
         print(f"... Something went wrong while fetching indicator {indicator_id}: {type(e).__name__} - {e}")
         # return empty df to avoid breaking higher loops
         return pd.DataFrame(columns = ["indicator_id", "country_iso3code", "year", "value"])
 
+    if on_chunk:
+        # streaming mode: nothing to return
+        return pd.DataFrame(columns=["indicator_id", "country_iso3code", "year", "value"])
+
     if not frames:
-        # return empty with correct schema
+        # return empty df with correct schema
         return pd.DataFrame(columns = ["indicator_id", "country_iso3code", "year", "value"])
 
     try:
-        json_dfs = pd.concat(frames, ignore_index = True)
+        return pd.concat(frames, ignore_index=True)
     except Exception as e:
         print(f"...Failed to concatenate frames for {indicator_id}: {type(e).__name__} - {e}..\n")
         return pd.DataFrame(columns = ["indicator_id", "country_iso3code", "year", "value"])
 
+def _producer_fetch_indicator(indicator_id: str, out_q: Queue, stop_ev: Event,
+                              valid_country_iso3codes: list[str] | None, date: str | None = None):
+    def _emit(chunk: pd.DataFrame):
+        if stop_ev.is_set():
+            return
+        # drop null values early (saves DB work)
+        chunk = chunk.dropna(subset=["value"])
+        if not chunk.empty:
+            out_q.put((indicator_id, chunk))
     try:
-        # json uses keys: indicator{id}, countryiso3code, date, value
-        json_dfs["indicator_id"] = json_dfs["indicator"].apply(lambda x: (x or {}).get("id"))
-        json_dfs = json_dfs.rename(columns = {"countryiso3code": "country_iso3code"})
-        json_dfs["year"] = pd.to_numeric(json_dfs["date"], errors = "coerce").astype("Int64")
-        json_dfs["value"] = pd.to_numeric(json_dfs["value"], errors = "coerce")
-
-        if valid_country_iso3codes is not None:
-            before = len(json_dfs)
-            json_dfs = json_dfs[json_dfs["country_iso3code"].isin(valid_country_iso3codes)]
-            after = len(json_dfs)
-            print(f"\nFiltered out {before - after} region/aggregate rows for indicator {indicator_id}.")
-
-        print(f"Indicator {indicator_id}: collected {len(json_dfs)} country–year rows for the long fact table --- ദ്ദി（• ˕ •マ.ᐟ\n")
-        return json_dfs[["indicator_id", "country_iso3code", "year", "value"]]
-
+        get_indicator_allcountries(
+            indicator_id=indicator_id,
+            date=date,
+            valid_country_iso3codes=valid_country_iso3codes,
+            on_chunk=_emit,   # streaming callback
+        )
     except Exception as e:
-        print(f"... Post-processing failed for indicator {indicator_id}: {type(e).__name__} - {e}...\n")
-        return pd.DataFrame(columns = ["indicator_id", "country_iso3code", "year", "value"])
+        print(f"[worker] {indicator_id}: {type(e).__name__} - {e}")
+    finally:
+        # signal end of this indicator’s stream
+        out_q.put((indicator_id, None))
 
 #######################################
 # Save / persist to db
@@ -736,28 +802,65 @@ if __name__ == "__main__":
     wb_sources_rows, source_ids = get_all_wb_sources()
     wb_api_db.add_data_to_wb_source_table(wb_sources_rows)
 
-    wb_indicators_rows, indicator_ids, indicator_topics_rows, failed_sources = get_all_wb_indicators(source_ids)
+    wb_indicators_rows, indicator_ids, indicator_topics_rows, failed_sources, no_data_sources = get_all_wb_indicators(source_ids)
     wb_api_db.add_data_to_wb_indicators_table(wb_indicators_rows)
     wb_api_db.add_data_to_wb_indicator_topics_table(indicator_topics_rows)
 
-    for indicator in indicator_ids:
-        df = get_indicator_allcountries(
-            indicator_id = indicator,
-            # date = "1960:2024",
-            valid_country_iso3codes = country_iso3codes
-        )
-        df = df.dropna(subset = ["value"]) # drop nulls to keep table clean and save storage
+    # threaded fetch + main-thread streaming inserts
+    max_workers = int(os.getenv("WB_MAX_WORKERS", "8"))
+    q = Queue(maxsize=16) # backpressure to keep memory in check
+    stop = Event()
 
-        if df is None or df.empty:
-            print(f"Indicator {indicator} returned no data --> skipping.")
-            continue
+    # start producers (fetchers)
+    with ThreadPoolExecutor(max_workers=max_workers) as ex:
+        futures = [
+            ex.submit(_producer_fetch_indicator, ind, q, stop, country_iso3codes, None)
+            for ind in indicator_ids
+        ]
 
-        print(f"Inserting {len(df)} rows for indicator {indicator} ...")
-        try:
-            wb_api_db.add_data_to_wb_indicator_country_year_value_table(df)
-        except (Exception, psycopg.DatabaseError) as e:
-            print(f"Something went wrong with adding the data for the indicator {indicator} to the table. Error type: {type(e).__name__}, error message: '{e}'.")
-            continue # skip this indicator and move on
+        finished = 0
+        total_rows = 0
+        with tqdm(desc="DB inserts", unit="rows") as pbar:
+            while finished < len(futures):
+                indicator, df_chunk = q.get()
+                if df_chunk is None:
+                    finished += 1
+                    continue
+                try:
+                    wb_api_db.add_data_to_wb_indicator_country_year_value_table(df_chunk)
+                    n = len(df_chunk)
+                    total_rows += n
+                    pbar.update(n)
+                except (Exception, psycopg.DatabaseError) as e:
+                    print(f"[DB] {indicator}: {type(e).__name__} - {e}")
+
+        # surface any worker exceptions after consumption
+        for f in futures:
+            ex_err = f.exception()
+            if ex_err:
+                stop.set()
+                raise ex_err
+
+    print(f"\nStreaming insert complete. Total rows inserted/updated: {total_rows} ദ്ദി（• ˕ •マ.ᐟ \n")
+
+    # for indicator in indicator_ids:
+    #     df = get_indicator_allcountries(
+    #         indicator_id = indicator,
+    #         # date = "1960:2024",
+    #         valid_country_iso3codes = country_iso3codes
+    #     )
+    #     df = df.dropna(subset = ["value"]) # drop nulls to keep table clean and save storage
+    #
+    #     if df is None or df.empty:
+    #         print(f"Indicator {indicator} returned no data --> skipping.")
+    #         continue
+    #
+    #     print(f"Inserting {len(df)} rows for indicator {indicator} ...")
+    #     try:
+    #         wb_api_db.add_data_to_wb_indicator_country_year_value_table(df)
+    #     except (Exception, psycopg.DatabaseError) as e:
+    #         print(f"Something went wrong with adding the data for the indicator {indicator} to the table. Error type: {type(e).__name__}, error message: '{e}'.")
+    #         continue # skip this indicator and move on
 
     wb_api_db.close_connection()
 

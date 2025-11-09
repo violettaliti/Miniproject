@@ -130,7 +130,7 @@ CREATE TABLE IF NOT EXISTS thi_miniproject.staging_cpi_raw(
 	country_name TEXT NOT NULL,
 	year INTEGER NOT NULL,
 	cpi_score NUMERIC(5, 2) CHECK (cpi_score BETWEEN 0 AND 100),
-	CONSTRAINT country_year_unique_check UNIQUE (country_name, year)
+	CONSTRAINT country_year_unique_check_cpi UNIQUE (country_name, year)
 );
 
 -- final corruption perception index (CPI) table
@@ -141,9 +141,26 @@ CREATE TABLE IF NOT EXISTS thi_miniproject.corruption_perception_index(
 	PRIMARY KEY(country_iso3code, year)
 );
 
+-- staging world happiness report table
+CREATE TABLE IF NOT EXISTS thi_miniproject.staging_world_happiness_report(
+	country_name TEXT NOT NULL,	
+	year INTEGER NOT NULL,
+	happiness_score NUMERIC,
+	CONSTRAINT country_year_unique_check_h UNIQUE (country_name, year)
+);
+
+-- final world happiness report table
+CREATE TABLE IF NOT EXISTS thi_miniproject.world_happiness_report(
+	country_iso3code TEXT REFERENCES thi_miniproject.country_general_info(country_iso3code),
+	year INTEGER NOT NULL REFERENCES thi_miniproject.year(year),
+	happiness_score NUMERIC,
+	PRIMARY KEY(country_iso3code, year)
+);
+
 ----------------------------------------------------------
 -- Trigger functions
 ----------------------------------------------------------
+-- cpi trigger
 CREATE OR REPLACE FUNCTION thi_miniproject.staging_cpi_to_final()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -188,9 +205,55 @@ BEGIN
 END;
 $$;
 
+-- world happiness trigger
+CREATE OR REPLACE FUNCTION thi_miniproject.staging_world_happiness_report_to_final()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    c_iso3 TEXT;
+BEGIN
+    -- 1) try alias match first
+    SELECT ca.country_iso3code
+      INTO c_iso3
+      FROM thi_miniproject.country_alias AS ca
+     WHERE unaccent(lower(ca.country_name_alias))
+           = unaccent(lower(NEW.country_name))
+     LIMIT 1;
+
+    -- 2) fallback: direct match against wb official country names
+    IF c_iso3 IS NULL THEN
+        SELECT cgi.country_iso3code
+          INTO c_iso3
+          FROM thi_miniproject.country_general_info AS cgi
+         WHERE unaccent(lower(cgi.country_name))
+               = unaccent(lower(NEW.country_name))
+         LIMIT 1;
+    END IF;
+
+    -- 3) if still unknown, just log and keep the staging row
+    IF c_iso3 IS NULL THEN
+        RAISE NOTICE 'No country_iso3code match for "%" (year %); leaving row in staging.',
+                     NEW.country_name, NEW.year;
+        RETURN NEW;
+    END IF;
+
+    -- 4) upsert into final CPI table (idempotent)
+    INSERT INTO thi_miniproject.world_happiness_report
+           (country_iso3code, year, happiness_score)
+    VALUES (c_iso3, NEW.year, NEW.happiness_score)
+    ON CONFLICT (country_iso3code, year)
+    DO UPDATE SET
+        happiness_score = EXCLUDED.happiness_score;
+
+    RETURN NEW; -- keep the staging row as audit trail
+END;
+$$;
+
 ----------------------------------------------------------
 -- Triggers
 ----------------------------------------------------------
+-- cpi
 DROP TRIGGER IF EXISTS trg_staging_cpi_to_final
     ON thi_miniproject.staging_cpi_raw;
 
@@ -198,6 +261,15 @@ CREATE TRIGGER trg_staging_cpi_to_final
 AFTER INSERT ON thi_miniproject.staging_cpi_raw
 FOR EACH ROW
 EXECUTE FUNCTION thi_miniproject.staging_cpi_to_final();
+
+-- world happiness report
+DROP TRIGGER IF EXISTS trg_staging_world_happiness_to_final
+    ON thi_miniproject.staging_world_happiness_report;
+
+CREATE TRIGGER trg_staging_world_happiness_to_final
+AFTER INSERT ON thi_miniproject.staging_world_happiness_report
+FOR EACH ROW
+EXECUTE FUNCTION thi_miniproject.staging_world_happiness_report_to_final();
 
 ----------------------------------------------------------
 -- Views

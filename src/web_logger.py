@@ -187,6 +187,11 @@ def merge_tables_by_country(normalised_tables):
     return sorted_merged_table
 
 def transform_and_clean_data(table_to_be_transformed):
+    """
+    this function transform and clean the scraped data
+    :param table_to_be_transformed
+    :return: transformed and cleaned rows
+    """
     print(f"----------- Transforming and cleaning the table into a 3NF-compliant dataset! -----------\n")
     transformed_df = table_to_be_transformed.melt(
         id_vars = ["Country"], # column "country" remains the same / fixed
@@ -210,17 +215,46 @@ def transform_and_clean_data(table_to_be_transformed):
     print("The cleaned, transformed table description:\n\n", transformed_cleaned_df.describe())
     print(f"\n--------------- Finished transforming and cleaning the table! ₍^. .^₎Ⳋ -----------------\n")
 
+    # replace NaN with None for postgreSQL
+    cpi_db = transformed_cleaned_df.replace({np.nan: None})
     # turn the df into a list of tuples for saving into the db later
-    cpi_db = transformed_cleaned_df.replace({np.nan: None})  # replace NaN with None for postgreSQL
-    cpi_rows = list(cpi_db.itertuples(index = False, name = None))  # convert to list of tuples in correct column order
+    cpi_rows = list(cpi_db.itertuples(index = False, name = None))
 
     return cpi_rows
 
 #######################################
 # website:
-# data: World Happiness
+# data: World Happiness Report
 #######################################
+def get_world_happiness_scores(url):
+    """
+    this function scrapes the world happiness report and get the world happiness scores
+    :param url
+    :return: world happiness scores as list of tuples
+    """
+    df = pd.read_excel(url)
+    # columns include: year, rank, country name, score, etc.
+    cols = [col for col in df.columns]
+    rename_map = {}
+    for col in cols:
+        lowercase_col = col.lower()
+        if "country" in lowercase_col: rename_map[col] = "country_name"
+        elif lowercase_col.startswith("year"): rename_map[col] = "year"
+        elif "life evaluation" in lowercase_col or "ladder score" in lowercase_col or "score" == lowercase_col:
+            rename_map[col] = "happiness_score"
+    world_happiness_df = df.rename(columns = rename_map)
+    cleaned_world_happiness_df = world_happiness_df[["country_name","year","happiness_score"]].dropna(subset = ["country_name", "year"])
 
+    print(f"The first 5 rows of the world happiness df:\n\n", cleaned_world_happiness_df.head(), "\n")
+    print("NaN_values count:\n", cleaned_world_happiness_df.isna().sum())
+    print("\nThe world happiness df's description:\n\n", cleaned_world_happiness_df.describe())
+
+    # replace NaN with None for postgreSQL
+    world_happiness_db = cleaned_world_happiness_df.replace({np.nan: None})
+    # turn the df into a list of tuples for saving into the db later
+    world_happiness_rows = list(world_happiness_db.itertuples(index = False, name = None))
+
+    return world_happiness_rows
 
 #######################################
 # Save / persist to db
@@ -230,7 +264,7 @@ class WebDB(DBPostgres):
     def add_data_to_staging_cpi(self, data: list, table_name: str = "staging_cpi_raw"):
         """persist acquired data into db"""
         if not data:
-            print("There is no CPI data to add to the database. /ᐠ-˕-マ")
+            print("There is no CPI data to add to the database. /ᐠ-˕-マ\n")
             return
 
         query = sql.SQL("""
@@ -286,11 +320,32 @@ class WebDB(DBPostgres):
         except (Exception, psycopg.DatabaseError) as e:
             raise DatabaseError(f"Something went wrong with getting the CPI info of '{', '.join(country_names)}'. Error type: {type(e).__name__}, error message: '{e}'.")
 
+    def add_data_to_staging_world_happiness_report(self, data: list, table_name: str = "staging_world_happiness_report"):
+        """persist acquired data into db"""
+        if not data:
+            print("There is no world happiness data to add to the database. /ᐠ-˕-マ\n")
+            return
+
+        query = sql.SQL("""
+                        INSERT INTO {} (country_name, year, happiness_score)
+                        VALUES (%s, %s, %s)
+                        ON CONFLICT (country_name, year) DO NOTHING;
+                        """).format(sql.Identifier(table_name))
+        # on conflict do nothing to prevent throwing errors and creating duplicates
+
+        try:
+            self._executemany(query, data)
+            print(f"Successfully added or updated {len(data)} raw rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ")
+        except (Exception, psycopg.DatabaseError) as e:
+            self.connection.rollback()
+            raise DatabaseError(f"Something went wrong with adding the world happiness data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
+
 #######################################
 # Run the web crawlers
 #######################################
 if __name__ == "__main__":
     print("Hello from web_logger!")
+    # scraping CPI info
     dfs = scrape_country_cpi_tables()
     normalised_dfs = normalise_cpi_data(dfs)
     sorted_merged_table = merge_tables_by_country(normalised_dfs)
@@ -306,5 +361,12 @@ if __name__ == "__main__":
         web_db.get_cpi_country_info(names, start_year, end_year)
     else:
         print("\n--- Printing CPI scores for the countries of interest: Not a single country of interest was given ^. .^₎⟆ ---")
+
+    # scraping world happiness info
+    # url found for WHR 2025 “Data for Figure 2.1” (https://www.worldhappiness.report/data-sharing/)
+    xlsx_url = "https://files.worldhappiness.report/WHR25_Data_Figure_2.1v3.xlsx"
+
+    world_happiness_rows = get_world_happiness_scores(xlsx_url)
+    web_db.add_data_to_staging_world_happiness_report(world_happiness_rows)
 
     web_db.close_connection()
