@@ -10,6 +10,3 @@
 
 # postgreSQL runtime data / live db files
 /postgres_data/db/
-
-# CSVs extracted from APIs & webscraping
-/postgres_data/data/

@@ -26,18 +26,17 @@ To carry out a mini project and datapipeline using `APIs`, `web scraping`, `Dock
 - [X] Scrape complementary data from `websites` ❯❯ see the list below
   - [X] Web scraper prototype
   - [X] Extend data sources for web scraping - 1
-- [ ] Store the acquired data in `PostgreSQL` ❯❯ `pgAdmin4` 
+- [X] Store the acquired data in `PostgreSQL` ❯❯ `pgAdmin4` 
   - [X] Database prototype
   - [X] Initial relational database schema
-  - [ ] Extend / update relational database schema
+  - [X] Extend / update relational database schema
   - [X] Extend database with the additional data acquired from extended API requests and web-scraping - 1
-  - [ ] Extend database with the additional data acquired from extended API requests and web-scraping - 2
+  - [X] Extend database with the additional data acquired from extended API requests and web-scraping - 2
 - [X] Unittests for save_data.py
-- [ ] Clean, transform and export data for visualisation ❯❯ `Power BI` 
-- [ ] Connect `Power BI` to `PostgreSQL` database container
-- [X] Play with visualisation 📊
+- [X] Clean, transform and export data for visualisation ❯❯ `Power BI` 
+- [X] Connect `Power BI` to `PostgreSQL` database container
+- [ ] Play with visualisation 📊
 - [ ] Tidy up Git (merge branches if needed)
-- [ ] Include AI models to play with the processed data (mostly supervised learning)
 - [ ] Wrap up the project and go harass my Siamese cats with unsolicited kisses ^. .^₎ฅ
 
 ## Project structure
@@ -52,7 +51,6 @@ miniproject/
 ├─ docker-compose.yml
 ├─ Dockerfile
 ├─ data_visualisation/
-│  ├─ thi_miniproject_dashboard.pbix
 │  └─ visuals_analysis.pdf
 ├─ src/
 │  ├─ __init__.py
@@ -64,7 +62,6 @@ miniproject/
 │     └─ test_save_data.py
 └─ postgres_data/
    ├─ db/ # actual database files (postgres storage)
-   ├─ data/ # for storing CSVs if needed
    ├─ queries.sql # pre-written sql queries (SELECT statements) for exploring the db
    └─ init/
      └─ schema.sql # DDL in 3NF, triggers, functions, procedures etc.

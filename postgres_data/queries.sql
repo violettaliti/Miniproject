@@ -35,7 +35,7 @@ SELECT * FROM wb_indicator_country_year_value;
 ---- example dql queries ----
 -- 1/. general info of a specific country
 SELECT * FROM country_general_info
-	WHERE country_name ILIKE '%china%';
+WHERE country_name ILIKE '%china%';
 
 -- 2/. which topic has the most total indicator count
 SELECT t.topic_id, t.topic_name, 
@@ -57,7 +57,7 @@ GROUP BY s.source_id, s.source_name
 
 -- 4/. indicators have gdp in their name
 SELECT * FROM wb_indicators
-	WHERE indicator_name ILIKE '%gdp%';
+WHERE indicator_name ILIKE '%gdp%';
 
 -- 5/. total row count for each indicator in the selected indicators list
 SELECT i.indicator_id, i.indicator_name, COUNT(*) AS total_row_count
@@ -152,16 +152,16 @@ SELECT (SELECT COUNT(*) FROM thi_miniproject.staging_cpi_raw) AS staging_count,
 
 -- CPI - unmatched names (not resolvable by alias or canonical name)
 WITH norm AS (
-  SELECT r.*,
-         unaccent(lower(trim(r.country_name))) AS nname
-  FROM thi_miniproject.staging_cpi_raw r
+ 	SELECT r.*,
+         	unaccent(lower(trim(r.country_name))) AS nname
+ 	FROM thi_miniproject.staging_cpi_raw r
 )
 SELECT n.country_name, COUNT(*) AS rows_unmatched
 FROM norm n
 LEFT JOIN thi_miniproject.country_general_info c
-  ON unaccent(lower(trim(c.country_name))) = n.nname
+ 	ON unaccent(lower(trim(c.country_name))) = n.nname
 LEFT JOIN thi_miniproject.country_alias a
-  ON unaccent(lower(trim(a.country_name_alias))) = n.nname
+  	ON unaccent(lower(trim(a.country_name_alias))) = n.nname
 WHERE c.country_iso3code IS NULL AND a.country_iso3code IS NULL
 GROUP BY n.country_name
 ORDER BY rows_unmatched DESC;
@@ -175,16 +175,16 @@ SELECT (SELECT COUNT(*) FROM thi_miniproject.staging_world_happiness_report) AS 
 
 -- WHR - unmatched names (not resolvable by alias or canonical name)
 WITH norm AS (
-  SELECT r.*,
-         unaccent(lower(trim(r.country_name))) AS nname
-  FROM thi_miniproject.staging_world_happiness_report r
+  	SELECT r.*,
+       	  unaccent(lower(trim(r.country_name))) AS nname
+  	FROM thi_miniproject.staging_world_happiness_report r
 )
 SELECT n.country_name, COUNT(*) AS rows_unmatched
 FROM norm n
 LEFT JOIN thi_miniproject.country_general_info c
-  ON unaccent(lower(trim(c.country_name))) = n.nname
+  	ON unaccent(lower(trim(c.country_name))) = n.nname
 LEFT JOIN thi_miniproject.country_alias a
-  ON unaccent(lower(trim(a.country_name_alias))) = n.nname
+  	ON unaccent(lower(trim(a.country_name_alias))) = n.nname
 WHERE c.country_iso3code IS NULL AND a.country_iso3code IS NULL
 GROUP BY n.country_name
 ORDER BY rows_unmatched DESC;

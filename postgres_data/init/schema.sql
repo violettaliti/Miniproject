@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS thi_miniproject.region(
 CREATE TABLE IF NOT EXISTS thi_miniproject.country_general_info(
 	country_iso3code TEXT PRIMARY KEY,
     country_iso2code TEXT,
-	country_name TEXT,
+	country_name TEXT NOT NULL,
 	region_id TEXT NOT NULL REFERENCES thi_miniproject.region(region_id),
 	country_income_level TEXT,
 	country_capital_city TEXT,
