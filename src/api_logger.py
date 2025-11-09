@@ -6,7 +6,7 @@ import psycopg
 from psycopg import sql
 import pandas as pd
 import numpy as np
-import time
+import time # part of python standard library
 
 headers_default = {
     "User-Agent": (
@@ -19,7 +19,9 @@ headers_default = {
 #######################################
 # API: World Bank
 #######################################
-def get_with_timeoff(url, attempts = 5, base_sleep = 1.0, timeout = 15):
+wb_api_base = "https://api.worldbank.org/v2"
+
+def _get_with_timeoff(url, attempts = 5, base_sleep = 1.0, timeout = 30):
     for i in range(attempts):
         response = requests.get(url, timeout = timeout, headers = headers_default)
         if response.status_code == 200:
@@ -80,11 +82,15 @@ def get_country_general_info():
         print(country_info_df.info())
         print("\n---- Finish collecting data! ᓚ₍⑅^..^₎♡ ----\n")
 
+        # list of all country_iso3codes for double-checking later
+        country_iso3codes = country_info_df["country_iso3code"].unique().tolist()
+
+        # replace NaN with None for postgreSQL
+        country_info_db = country_info_df.replace({np.nan: None})
         # turn the df into a list of tuples for saving into the db later
-        country_info_db = country_info_df.replace({np.nan: None}) # replace NaN with None for postgreSQL
         country_rows = list(country_info_db.itertuples(index=False, name=None))
 
-        return country_rows
+        return country_rows, country_iso3codes
 
     except requests.exceptions.RequestException as e:
         print(f"Something went wrong ૮₍•᷄  ༝ •᷅₎ა --> Error message: {type(e).__name__} - {e}.")
@@ -122,8 +128,9 @@ def get_all_wb_topics():
         print(topics_df.info())
         print(f"\n--- {len(topics_df)} WB topics have been collected!  --- ദ്ദി（• ˕ •マ.ᐟ\n")
 
+        # replace NaN with None for postgreSQL
+        wb_topics_db = topics_df.replace({np.nan: None})
         # turn the df into a list of tuples for saving into the db later
-        wb_topics_db = topics_df.replace({np.nan: None})  # replace NaN with None for postgreSQL
         wb_topics_rows = list(wb_topics_db.itertuples(index = False, name = None))
 
         return wb_topics_rows
@@ -181,8 +188,9 @@ def get_all_wb_sources():
         # list of all source ids for looping later
         source_ids = sources_df["source_id"].unique().tolist()
 
+        # replace NaN with None for postgreSQL
+        wb_sources_db = sources_df.replace({np.nan: None})
         # turn the df into a list of tuples for saving into the db later
-        wb_sources_db = sources_df.replace({np.nan: None})  # replace NaN with None for postgreSQL
         wb_sources_rows = list(wb_sources_db.itertuples(index = False, name = None))
 
         return wb_sources_rows, source_ids
@@ -201,14 +209,15 @@ def get_all_wb_indicators(source_ids_list):
     """
     all_indicators_df = []
     failed_sources = []
+    no_data_sources = []
     print(f"\n ... Fetching indicators from {len(source_ids_list)} WB sources ...\n")
 
     for source_id in source_ids_list:
         url = f"https://api.worldbank.org/v2/source/{source_id}/indicators?format=json&per_page=20000"
-        print(f"... Querying source ID {source_id}: {url} ... ₍^. .^₎Ⳋ\n")
+        print(f"\n... Querying source ID {source_id}: {url} ... ₍^. .^₎Ⳋ\n")
 
         try:
-            response = get_with_timeoff(url)
+            response = _get_with_timeoff(url)
             if response.status_code != 200:
                 print(f"..!!.. Source {source_id} returned status {response.status_code} ---> skipping!\n")
                 failed_sources.append(source_id)
@@ -217,7 +226,8 @@ def get_all_wb_indicators(source_ids_list):
             json_data = response.json()
             # some sources return empty datasets
             if len(json_data) < 2 or not json_data[1]:
-                print(f"..!!.. Source {source_id} returned no indicators --> skipping!")
+                print(f"..!!.. Source {source_id} returned no indicators --> skipping!\n")
+                no_data_sources.append(source_id)
                 continue
 
             wb_indicators = json_data[1]
@@ -230,7 +240,7 @@ def get_all_wb_indicators(source_ids_list):
                     "topics": indicator.get("topics", [])
                 } for indicator in wb_indicators
             ])
-            print(f"\n--- Source {source_id}: {len(indicators_df)} indicators have been collected!  --- ദ്ദി（• ˕ •マ.ᐟ\n")
+            print(f"--- Source {source_id}: {len(indicators_df)} indicators have been collected!  --- ദ്ദി（• ˕ •マ.ᐟ\n")
             all_indicators_df.append(indicators_df)
 
             # avoid suspicion :D
@@ -248,7 +258,7 @@ def get_all_wb_indicators(source_ids_list):
 
     combined_df = pd.concat(all_indicators_df, ignore_index = True)
     print(f"\n--- Combined total indicators: {len(combined_df)} indicators collected across {len(source_ids_list)} sources! (•˕ •マ.ᐟ ---\n")
-    print(f"-- Sources skipped: {failed_sources} --\n")
+    print(f"-- Sources skipped: {failed_sources}; or have no data: {no_data_sources}--\n")
 
     # replace NaN with None for postgreSQL
     wb_indicators_db = combined_df.replace({np.nan: None})
@@ -274,32 +284,69 @@ def get_all_wb_indicators(source_ids_list):
 
     return wb_indicators_rows, indicator_ids, indicator_topics_rows, failed_sources
 
-# csv data
-#     try:
-#         url = "https://api.worldbank.org/v2/country/all/indicator/SP.POP.TOTL;NY.GDP.MKTP.KD.ZG;FP.CPI.TOTL.ZG;SL.UEM.TOTL.ZS;CC.EST?per_page=20000&format=csv" # indicators:  | NY.GDP.MKTP.KD.ZG: GDP growth | CC.EST: corruption info
-#         response = requests.get(url, timeout=5)
-#         print("\nQueried URL:", response.url, "\n")
-#
-#         # if running inside Docker -> keep this as /data
-#         # if running locally outside Docker -> set DATA_DIR="postgres_data/data"
-#         DATA_DIR = Path(os.getenv("DATA_DIR", "/data"))
-#         DATA_DIR.mkdir(parents=True, exist_ok=True)  # create the folder (and any missing parents) if it doesn’t exist; don’t error if it already exists
-#
-#         out_path = DATA_DIR / "wb_all_countries_multi_indicators.csv"
-#
-#         if response.status_code == 200:
-#             out_path.write_bytes(response.content)
-#
-#             print(f"Saved → {out_path}")
-#
-#             df = pd.read_csv("wb_all_countries_multi_indicators.csv")
-#             print(df.head())
-#
-#         else:
-#             print(f"Something went wrong, I couldn't fetch the requested data /ᐠ-˕-マ. Error status code: {response.status_code}.")
-#
-#     except requests.exceptions.RequestException as e:
-#         print(f"Something went wrong ૮₍•᷄  ༝ •᷅₎ა --> Error message: {type(e).__name__} - {e}.")
+def get_indicator_allcountries(indicator_id: str, date: str | None = None, valid_country_iso3codes: list[str] | None = None):
+    """
+    this function requests data in JSON format
+    wb api mixes real countries and aggregates / regions --> this function also filters by the list of country_iso3codes from the get_country_general_info()
+    :return: tidy df: columns = ['indicator_id', 'country_iso3code', 'year', 'value'] (value is float or NaN)
+    """
+    frames, page = [], 1
+    try:
+        while True:
+            # build url carefully so both date/no-date work with pagination
+            if date:
+                url_json = (f"{wb_api_base}/country/all/indicator/{indicator_id}"
+                            f"?date={date}&format=json&per_page=20000&page={page}")
+            else:
+                url_json = (f"{wb_api_base}/country/all/indicator/{indicator_id}"
+                            f"?format=json&per_page=20000&page={page}")
+
+            response_js = _get_with_timeoff(url_json)
+            if response_js.status_code != 200:
+                break # only exiting this pagination loop
+            response_json = response_js.json()
+            if len(response_json) < 2 or not response_json[1]: # if the response has no data
+                break
+            meta, rows = response_json[0], response_json[1]
+            frames.append(pd.DataFrame(rows)) # append the current page of rows
+            if page >= int(meta.get("pages", 1)): # if "pages" == 3, and we’re currently on page == 3 --> stop looping
+                break
+            page += 1
+
+    except requests.exceptions.RequestException as e:
+        print(f"... Something went wrong while fetching indicator {indicator_id}: {type(e).__name__} - {e}")
+        # return empty df to avoid breaking higher loops
+        return pd.DataFrame(columns = ["indicator_id", "country_iso3code", "year", "value"])
+
+    if not frames:
+        # return empty with correct schema
+        return pd.DataFrame(columns = ["indicator_id", "country_iso3code", "year", "value"])
+
+    try:
+        json_dfs = pd.concat(frames, ignore_index = True)
+    except Exception as e:
+        print(f"...Failed to concatenate frames for {indicator_id}: {type(e).__name__} - {e}..\n")
+        return pd.DataFrame(columns = ["indicator_id", "country_iso3code", "year", "value"])
+
+    try:
+        # json uses keys: indicator{id}, countryiso3code, date, value
+        json_dfs["indicator_id"] = json_dfs["indicator"].apply(lambda x: (x or {}).get("id"))
+        json_dfs = json_dfs.rename(columns = {"countryiso3code": "country_iso3code"})
+        json_dfs["year"] = pd.to_numeric(json_dfs["date"], errors = "coerce").astype("Int64")
+        json_dfs["value"] = pd.to_numeric(json_dfs["value"], errors = "coerce")
+
+        if valid_country_iso3codes is not None:
+            before = len(json_dfs)
+            json_dfs = json_dfs[json_dfs["country_iso3code"].isin(valid_country_iso3codes)]
+            after = len(json_dfs)
+            print(f"\nFiltered out {before - after} region/aggregate rows for indicator {indicator_id}.")
+
+        print(f"Indicator {indicator_id}: collected {len(json_dfs)} country–year rows for the long fact table --- ദ്ദി（• ˕ •マ.ᐟ\n")
+        return json_dfs[["indicator_id", "country_iso3code", "year", "value"]]
+
+    except Exception as e:
+        print(f"... Post-processing failed for indicator {indicator_id}: {type(e).__name__} - {e}...\n")
+        return pd.DataFrame(columns = ["indicator_id", "country_iso3code", "year", "value"])
 
 #######################################
 # Save / persist to db
@@ -356,7 +403,6 @@ class ApiDB(DBPostgres):
 
         try:
             self._executemany(query, data)
-            self.connection.commit()
             print(f"Successfully added or updated {len(data)} rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ\n")
         except (Exception, psycopg.DatabaseError) as e:
             self.connection.rollback()
@@ -378,7 +424,6 @@ class ApiDB(DBPostgres):
 
         try:
             self._executemany(query, data)
-            self.connection.commit()
             print(f"Successfully added or updated {len(data)} normalised rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ\n")
         except (Exception, psycopg.DatabaseError) as e:
             self.connection.rollback()
@@ -399,7 +444,6 @@ class ApiDB(DBPostgres):
 
         try:
             self._executemany(query, data)
-            self.connection.commit()
             print(f"Successfully added or updated {len(data)} normalised rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ\n")
         except (Exception, psycopg.DatabaseError) as e:
             self.connection.rollback()
@@ -420,7 +464,6 @@ class ApiDB(DBPostgres):
 
         try:
             self._executemany(query, data)
-            self.connection.commit()
             print(f"Successfully added or updated {len(data)} country-alias rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ\n")
         except (Exception, psycopg.DatabaseError) as e:
             self.connection.rollback()
@@ -506,7 +549,6 @@ class ApiDB(DBPostgres):
 
         try:
             self._executemany(query, data)
-            self.connection.commit()
             print(f"Successfully added or updated {len(data)} normalised rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ\n")
         except (Exception, psycopg.DatabaseError) as e:
             self.connection.rollback()
@@ -527,7 +569,6 @@ class ApiDB(DBPostgres):
 
         try:
             self._executemany(query, data)
-            self.connection.commit()
             print(f"Successfully added or updated {len(data)} normalised rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ\n")
         except (Exception, psycopg.DatabaseError) as e:
             self.connection.rollback()
@@ -548,7 +589,6 @@ class ApiDB(DBPostgres):
 
         try:
             self._executemany(query, data)
-            self.connection.commit()
             print(f"Successfully added or updated {len(data)} normalised rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ\n")
         except (Exception, psycopg.DatabaseError) as e:
             self.connection.rollback()
@@ -569,8 +609,46 @@ class ApiDB(DBPostgres):
 
         try:
             self._executemany(query, data)
-            self.connection.commit()
             print(f"Successfully added or updated {len(data)} normalised rows into '{table_name}' ദ്ദി（•˕•マ.ᐟ\n")
+        except (Exception, psycopg.DatabaseError) as e:
+            self.connection.rollback()
+            raise DatabaseError(f"Something went wrong with adding the normalised API-data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
+
+    def add_data_to_wb_indicator_country_year_value_table(self, df: pd.DataFrame, table_name: str = "wb_indicator_country_year_value", batch_size: int = 5000):
+        """persist normalized wb API data (df) into the database in batches.
+        Expects columns: ['indicator_id', 'country_iso3code', 'year', 'value']
+        """
+        if df is None or df.empty:
+            print("There is no normalised API-data to add to the database. /ᐠ-˕-マ\n")
+            return
+
+        # check / clean up
+        required_cols = ["indicator_id", "country_iso3code", "year", "value"]
+        missing = [col for col in required_cols if col not in df.columns]
+        if missing:
+            raise ValueError(f"DataFrame missing required columns: {missing}!\n")
+
+        df_copy = df[required_cols].copy()
+        normalised_df = df_copy.replace({np.nan: None})
+
+        rows = [
+            (r.indicator_id, r.country_iso3code, int(r.year) if r.year else None, r.value)
+            for r in normalised_df.itertuples(index = False)
+        ]
+
+        query = sql.SQL("""
+                        INSERT INTO {} (indicator_id, country_iso3code, year, value)
+                        VALUES (%s, %s, %s, %s)
+                        ON CONFLICT (indicator_id, country_iso3code, year)
+                        DO UPDATE SET value = EXCLUDED.value;
+                        """).format(sql.Identifier(table_name))
+        # on conflict: take the latest inserted values
+
+        try:
+            for i in range(0, len(rows), batch_size):
+                batch = rows[i:i + batch_size]
+                self._executemany(query, batch)
+            print(f"Successfully added or updated {len(rows)} normalised rows into '{table_name}' (batch size={batch_size}) ദ്ദി（•˕•マ.ᐟ\n")
         except (Exception, psycopg.DatabaseError) as e:
             self.connection.rollback()
             raise DatabaseError(f"Something went wrong with adding the normalised API-data to the table '{table_name}'. Error type: {type(e).__name__}, error message: '{e}'.")
@@ -580,9 +658,9 @@ class ApiDB(DBPostgres):
 #######################################
 if __name__ == "__main__":
     print("Hello from api_logger!")
-    api_data = get_country_general_info()
+    country_rows, country_iso3codes = get_country_general_info()
     wb_api_db = ApiDB()
-    wb_api_db.add_data_to_staging_country_general_info_table(api_data)
+    wb_api_db.add_data_to_staging_country_general_info_table(country_rows)
 
     display_all = os.getenv("DISPLAY_ALL_EU_COUNTRIES_INFO", "false").strip().lower() in ("1", "true", "yes")
     if display_all:
@@ -597,13 +675,13 @@ if __name__ == "__main__":
     else:
         print("\n--- Printing general country info for the countries of interest: No info about countries of interest was given ^. .^₎⟆ ---")
 
-    normalised_api_data_region = [(country_tuple[4], country_tuple[5], country_tuple[3]) for country_tuple in api_data]
+    normalised_api_data_region = [(country_tuple[4], country_tuple[5], country_tuple[3]) for country_tuple in country_rows]
     wb_api_db.add_data_to_region_table(normalised_api_data_region)
 
-    normalised_api_data_country_general = [(country_tuple[0], country_tuple[1], country_tuple[2], country_tuple[4], country_tuple[6], country_tuple[7], country_tuple[8], country_tuple[9]) for country_tuple in api_data]
+    normalised_api_data_country_general = [(country_tuple[0], country_tuple[1], country_tuple[2], country_tuple[4], country_tuple[6], country_tuple[7], country_tuple[8], country_tuple[9]) for country_tuple in country_rows]
     wb_api_db.add_data_to_country_general_info_table(normalised_api_data_country_general)
 
-    normalised_api_data_alias = [(country_tuple[2], country_tuple[0]) for country_tuple in api_data]
+    normalised_api_data_alias = [(country_tuple[2], country_tuple[0]) for country_tuple in country_rows]
     wb_api_db.add_data_to_country_alias_table(normalised_api_data_alias)
 
     print("Adding additional country aliases...")
@@ -661,6 +739,25 @@ if __name__ == "__main__":
     wb_indicators_rows, indicator_ids, indicator_topics_rows, failed_sources = get_all_wb_indicators(source_ids)
     wb_api_db.add_data_to_wb_indicators_table(wb_indicators_rows)
     wb_api_db.add_data_to_wb_indicator_topics_table(indicator_topics_rows)
+
+    for indicator in indicator_ids:
+        df = get_indicator_allcountries(
+            indicator_id = indicator,
+            # date = "1960:2024",
+            valid_country_iso3codes = country_iso3codes
+        )
+        df = df.dropna(subset = ["value"]) # drop nulls to keep table clean and save storage
+
+        if df is None or df.empty:
+            print(f"Indicator {indicator} returned no data --> skipping.")
+            continue
+
+        print(f"Inserting {len(df)} rows for indicator {indicator} ...")
+        try:
+            wb_api_db.add_data_to_wb_indicator_country_year_value_table(df)
+        except (Exception, psycopg.DatabaseError) as e:
+            print(f"Something went wrong with adding the data for the indicator {indicator} to the table. Error type: {type(e).__name__}, error message: '{e}'.")
+            continue # skip this indicator and move on
 
     wb_api_db.close_connection()
 
