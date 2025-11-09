@@ -333,7 +333,7 @@ def get_indicator_allcountries(indicator_id: str, date: str | None = None, valid
 
         response_1 = response_json_1.json()
         if len(response_1) < 2 or not response_1[1]: # if the response has no data
-            return pd.DataFrame(columns=["indicator_id", "country_iso3code", "year", "value"])
+            return pd.DataFrame(columns = ["indicator_id", "country_iso3code", "year", "value"])
 
         meta, rows = response_1[0], response_1[1]
         pages = int(meta.get("pages", 1))
@@ -380,7 +380,7 @@ def get_indicator_allcountries(indicator_id: str, date: str | None = None, valid
 
     if on_chunk:
         # streaming mode: nothing to return
-        return pd.DataFrame(columns=["indicator_id", "country_iso3code", "year", "value"])
+        return pd.DataFrame(columns = ["indicator_id", "country_iso3code", "year", "value"])
 
     if not frames:
         # return empty df with correct schema
@@ -398,15 +398,15 @@ def _producer_fetch_indicator(indicator_id: str, out_q: Queue, stop_ev: Event,
         if stop_ev.is_set():
             return
         # drop null values early (saves DB work)
-        chunk = chunk.dropna(subset=["value"])
+        chunk = chunk.dropna(subset = ["value"])
         if not chunk.empty:
             out_q.put((indicator_id, chunk))
     try:
         get_indicator_allcountries(
-            indicator_id=indicator_id,
-            date=date,
-            valid_country_iso3codes=valid_country_iso3codes,
-            on_chunk=_emit,   # streaming callback
+            indicator_id = indicator_id,
+            date = date,
+            valid_country_iso3codes = valid_country_iso3codes,
+            on_chunk = _emit,   # streaming callback
         )
     except Exception as e:
         print(f"[worker] {indicator_id}: {type(e).__name__} - {e}")
