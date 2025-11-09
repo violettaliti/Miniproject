@@ -10,3 +10,5 @@
 
 # postgreSQL runtime data / live db files
 /postgres_data/db/
+
+.$thi_miniproject_database_logical_schema.png.bkp
