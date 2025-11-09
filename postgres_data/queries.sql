@@ -19,6 +19,7 @@ SELECT * FROM wb_source;
 SELECT * FROM wb_topics;
 SELECT * FROM wb_indicators;
 SELECT * FROM wb_indicator_topics;
+SELECT * FROM wb_indicator_country_year_value;
 
 ---- example dql queries ----
 -- 1/.
