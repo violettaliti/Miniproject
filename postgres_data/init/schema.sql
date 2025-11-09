@@ -109,6 +109,19 @@ CREATE TABLE IF NOT EXISTS thi_miniproject.wb_indicator_topics (
 	PRIMARY KEY(indicator_id, topic_id)
 );
 
+-- long fact table
+CREATE TABLE IF NOT EXISTS wb_indicator_country_year_value (
+	indicator_id TEXT NOT NULL REFERENCES thi_miniproject.wb_indicators(indicator_id),
+	country_iso3code TEXT NOT NULL REFERENCES thi_miniproject.country_general_info(country_iso3code),
+	year INTEGER NOT NULL REFERENCES thi_miniproject.year(year),
+	value NUMERIC,
+	PRIMARY KEY (indicator_id, country_iso3code, year)
+);
+
+-- indexes for faster queries
+CREATE INDEX IF NOT EXISTS idx_wb_indicator_id ON wb_indicator_country_year_value (indicator_id);
+CREATE INDEX IF NOT EXISTS idx_wb_year ON wb_indicator_country_year_value (year);
+
 ----------------------------------------------------------
 -- Tables for data from web scraping
 ----------------------------------------------------------
@@ -122,8 +135,8 @@ CREATE TABLE IF NOT EXISTS thi_miniproject.staging_cpi_raw(
 
 -- final corruption perception index (CPI) table
 CREATE TABLE IF NOT EXISTS thi_miniproject.corruption_perception_index(
-	country_iso3code TEXT REFERENCES country_general_info(country_iso3code),
-	year INTEGER NOT NULL REFERENCES year(year),
+	country_iso3code TEXT REFERENCES thi_miniproject.country_general_info(country_iso3code),
+	year INTEGER NOT NULL REFERENCES thi_miniproject.year(year),
 	cpi_score NUMERIC(5, 2) CHECK (cpi_score BETWEEN 0 AND 100),
 	PRIMARY KEY(country_iso3code, year)
 );
