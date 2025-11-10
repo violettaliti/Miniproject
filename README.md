@@ -180,4 +180,6 @@ then have fun ദ്ദി/ᐠ｡‸｡ᐟ\ !!
 
 then have fun ദ്ദി/ᐠ｡‸｡ᐟ\ !!
 
+## Logical Schema
+
 ![Logical schema](data_visualisation/database_logical_schema.png)
