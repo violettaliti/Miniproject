@@ -35,9 +35,9 @@ To carry out a mini project and datapipeline using `APIs`, `web scraping`, `Dock
 - [X] Unittests for save_data.py
 - [X] Clean, transform and export data for visualisation ❯❯ `Power BI` 
 - [X] Connect `Power BI` to `PostgreSQL` database container
-- [ ] Play with visualisation 📊
-- [ ] Tidy up Git (merge branches if needed)
-- [ ] Wrap up the project and go harass my Siamese cats with unsolicited kisses ^. .^₎ฅ
+- [X] Play with visualisation 📊
+- [X] Tidy up Git (merge branches if needed)
+- [X] Wrap up the project and go harass my Siamese cats with unsolicited kisses ^. .^₎ฅ
 
 ## Project structure
 
@@ -77,7 +77,7 @@ miniproject/
     - 21 World Bank topics (e.g. Economy & growth, education, environment)
     - 29 256 World Bank indicators (e.g. GDP, trade, import/export, education/literacy levels, population demographics etc.)
       - each indicator will then be queried to give values for each country over all available years (mostly from 1960 to 2024)
-      --> currently it has collected over 15 million datapoints. 
+      - --> currently it has collected over **15.3 million datapoints**. 
 
 - Specific topics:
   - Overview of regional and global data over different economic, geographic, social and political indicators over time, e.g.:
@@ -128,7 +128,7 @@ cd Miniproject
 docker compose up --build
 ```
 
-*which will both build the docker image, run and open these containers in the following order:*
+which will both build the docker image, run and open these containers *in the following order*:
   1. database container ```db``` starts --> healthcheck runs
   2. healthcheck ok ('service_healthy') --> ```app_db_test``` runs integration ```unittests```
   3. if all tests pass --> python loaders / containers ```app_api_logger``` and ```app_web_logger``` start ₍^. .^₎⟆
@@ -144,13 +144,12 @@ docker compose up --build
   - ```Maintenance database```: worldbank
   - ```Username```: user
   - ```Password```: katzi
-    - Save password? --> Yes for peace of mind later!!
 - Step 5: 
   - > ```Servers``` -> miniproject 
     - > ```Databases``` -> worldbank 
       - > ```Schemas``` -> thi_miniproject
         - > ```Tables``` -> right click 'Refresh' -> Query Tool
-- Step 6: type this in the pop-up Query window:
+- Step 6: open postgres_data/queries.sql or run this:
 ```
 SET search_path TO thi_miniproject;
 ```
@@ -159,7 +158,7 @@ then have fun ദ്ദി/ᐠ｡‸｡ᐟ\ !!
 ## How to connect to the database in PowerBI
 - Step 1: install ```Power BI```
 - Step 2: click on ```Get data``` on the Home tab of the main ribbon, or ```Get data from another source``` on the main dashboard
-- Step 3: on the pop-up window ```Get data```, type in / choose ```PostgreSQL database``` in the search bar
+- Step 3: type / choose ```PostgreSQL database``` in the search bar
 - Step 4: on the pop-up window:
   - ```Server```: localhost:5555
   - ```Database```: worldbank
