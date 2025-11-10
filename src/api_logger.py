@@ -260,7 +260,7 @@ def get_all_wb_indicators(source_ids_list):
     # combine all sources into one df
     if not all_indicators_df:
         print("...!!... No indicator data collected at all ...!!... ૮₍•᷄  ༝ •᷅₎ა \n")
-        return [], [], []
+        return [], [], [], [], []
 
     combined_df = pd.concat(all_indicators_df, ignore_index = True)
     print(f"\n--- Combined total indicators: {len(combined_df)} indicators collected across {len(source_ids_list)} sources! (•˕ •マ.ᐟ ---\n")
@@ -397,7 +397,7 @@ def _producer_fetch_indicator(indicator_id: str, out_q: Queue, stop_ev: Event,
     def _emit(chunk: pd.DataFrame):
         if stop_ev.is_set():
             return
-        # drop null values early (saves DB work)
+        # drop null values early (saves db work and storage)
         chunk = chunk.dropna(subset = ["value"])
         if not chunk.empty:
             out_q.put((indicator_id, chunk))
@@ -406,7 +406,7 @@ def _producer_fetch_indicator(indicator_id: str, out_q: Queue, stop_ev: Event,
             indicator_id = indicator_id,
             date = date,
             valid_country_iso3codes = valid_country_iso3codes,
-            on_chunk = _emit,   # streaming callback
+            on_chunk = _emit, # streaming callback
         )
     except Exception as e:
         print(f"[worker] {indicator_id}: {type(e).__name__} - {e}")

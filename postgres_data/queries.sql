@@ -166,9 +166,6 @@ WHERE c.country_iso3code IS NULL AND a.country_iso3code IS NULL
 GROUP BY n.country_name
 ORDER BY rows_unmatched DESC;
 
-SELECT * FROM staging_world_happiness_report;
-SELECT * FROM world_happiness_report;
-
 -- WHR - quick count comparison
 SELECT (SELECT COUNT(*) FROM thi_miniproject.staging_world_happiness_report) AS staging_count,
        (SELECT COUNT(*) FROM thi_miniproject.world_happiness_report) AS final_count;

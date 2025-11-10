@@ -179,3 +179,5 @@ then have fun ദ്ദി/ᐠ｡‸｡ᐟ\ !!
   - thi_miniproject.v_cpi_latest
 
 then have fun ദ്ദി/ᐠ｡‸｡ᐟ\ !!
+
+![Logical schema](data_visualisation/database_logical_schema.png)
