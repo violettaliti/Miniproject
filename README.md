@@ -117,8 +117,9 @@ miniproject/
     - https://data.worldhappiness.report/table
 
 ## Requirements
+- ```Docker``` (of course!!!)
 - ```pgAdmin4``` installed locally (I didn't include a service / container for pgAdmin in my docker compose)
-- ```Power BI```
+- ```Power BI``` (if you want to visualise the data)
 
 ## How to start the project using Docker Compose
 Clone this repository, go to its folder, and launch docker compose:
