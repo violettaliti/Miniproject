@@ -71,8 +71,7 @@ services:
       - "5555:5432"
     volumes:
       - ./postgres_data/db:/var/lib/postgresql/data # bind mount for persistent db
-      - ./postgres_data/init:/docker-entrypoint-initdb.d # bind mount for init.sql
-      - ./postgres_data/data:/data # for the db to import the scraped csvs from World Bank API via COPY if need be
+      - ./postgres_data/init:/docker-entrypoint-initdb.d # bind mount for schema.sql
     networks:
       - miniproject_network
     healthcheck:
