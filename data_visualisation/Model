@@ -1,0 +1,3347 @@
+{
+  "name": "thi_miniproject_dashboard",
+  "compatibilityLevel": 1567,
+  "model": {
+    "culture": "en-US",
+    "dataAccessOptions": {
+      "legacyRedirects": true,
+      "returnErrorValuesAsNull": true
+    },
+    "defaultPowerBIDataSourceVersion": "powerBI_V3",
+    "sourceQueryCulture": "en-US",
+    "tables": [
+      {
+        "name": "v_cpi_latest",
+        "lineageTag": "fadd394d-b100-465c-bfb7-a612602c31f8",
+        "columns": [
+          {
+            "name": "country_iso3code",
+            "dataType": "string",
+            "sourceColumn": "country_iso3code",
+            "lineageTag": "4d2b17e1-48dc-45f1-b7bc-2502bab360f3",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "country_iso2code",
+            "dataType": "string",
+            "sourceColumn": "country_iso2code",
+            "lineageTag": "5ade14b3-10c2-4ce7-9c40-b630de0d866e",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "country_name",
+            "dataType": "string",
+            "sourceColumn": "country_name",
+            "lineageTag": "a7f32252-5d64-457a-a35c-568b83aacaff",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "year",
+            "dataType": "int64",
+            "sourceColumn": "year",
+            "formatString": "0",
+            "lineageTag": "59b088e9-de34-4a63-8fa4-53f3f5d0e55c",
+            "summarizeBy": "sum",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "cpi_score",
+            "dataType": "double",
+            "sourceColumn": "cpi_score",
+            "lineageTag": "5d2ef67e-7f2f-4377-99be-cbde3a352dd4",
+            "summarizeBy": "sum",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              },
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "v_cpi_latest",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = PostgreSQL.Database(\"192.168.0.52:5555\", \"worldbank\"),",
+                "    thi_miniproject_v_cpi_latest = Source{[Schema=\"thi_miniproject\",Item=\"v_cpi_latest\"]}[Data]",
+                "in",
+                "    thi_miniproject_v_cpi_latest"
+              ]
+            }
+          }
+        ],
+        "changedProperties": [
+          {
+            "property": "Name"
+          }
+        ],
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Table"
+          }
+        ]
+      },
+      {
+        "name": "v_cpi_with_region",
+        "lineageTag": "5855f382-e0ce-478b-bce1-1b2b77ee8f0f",
+        "columns": [
+          {
+            "name": "country_iso3code",
+            "dataType": "string",
+            "sourceColumn": "country_iso3code",
+            "lineageTag": "0f857f0c-6144-4140-8826-a14d265e93e1",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "country_iso2code",
+            "dataType": "string",
+            "sourceColumn": "country_iso2code",
+            "lineageTag": "10068969-d95a-41bc-b851-a01da983a403",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "country_name",
+            "dataType": "string",
+            "sourceColumn": "country_name",
+            "lineageTag": "1fd56d50-8556-46d6-b70e-c091041e8530",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "region_id",
+            "dataType": "string",
+            "sourceColumn": "region_id",
+            "lineageTag": "49e840f8-08aa-4fbe-ab2d-7cc46ff80a82",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "region_iso2code",
+            "dataType": "string",
+            "sourceColumn": "region_iso2code",
+            "lineageTag": "d4481469-e657-46f2-8b98-022ceb9031a1",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "region_name",
+            "dataType": "string",
+            "sourceColumn": "region_name",
+            "lineageTag": "bbf1235f-512e-4ff0-8ab8-4f563dd00481",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "year",
+            "dataType": "int64",
+            "sourceColumn": "year",
+            "formatString": "0",
+            "lineageTag": "b0bd6ab0-9d2f-41d7-90d8-10cc617ef6f4",
+            "summarizeBy": "sum",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "cpi_score",
+            "dataType": "double",
+            "sourceColumn": "cpi_score",
+            "lineageTag": "85c6c049-aa2b-4f10-bfd6-c904954b4bd6",
+            "summarizeBy": "sum",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              },
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "v_cpi_with_region",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = PostgreSQL.Database(\"192.168.0.52:5555\", \"worldbank\"),",
+                "    thi_miniproject_v_cpi_with_region = Source{[Schema=\"thi_miniproject\",Item=\"v_cpi_with_region\"]}[Data]",
+                "in",
+                "    thi_miniproject_v_cpi_with_region"
+              ]
+            }
+          }
+        ],
+        "changedProperties": [
+          {
+            "property": "Name"
+          }
+        ],
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Table"
+          }
+        ]
+      },
+      {
+        "name": "corruption_perception_index",
+        "lineageTag": "5368baf7-0d72-4eb0-b9b1-49bbaf8c54c0",
+        "columns": [
+          {
+            "name": "country_iso3code",
+            "dataType": "string",
+            "sourceColumn": "country_iso3code",
+            "lineageTag": "d0818c08-a190-4ef6-a78a-0afd183abf5f",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "year",
+            "dataType": "int64",
+            "sourceColumn": "year",
+            "formatString": "0",
+            "lineageTag": "18f17328-af31-4771-972b-e3d272021e51",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "cpi_score",
+            "dataType": "double",
+            "sourceColumn": "cpi_score",
+            "lineageTag": "2fe41d57-e4c1-4bfc-b99e-84cb9c44af03",
+            "summarizeBy": "sum",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              },
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "corruption_perception_index",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = PostgreSQL.Database(\"192.168.0.52:5555\", \"worldbank\"),",
+                "    thi_miniproject_corruption_perception_index = Source{[Schema=\"thi_miniproject\",Item=\"corruption_perception_index\"]}[Data]",
+                "in",
+                "    thi_miniproject_corruption_perception_index"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Avg CPI",
+            "expression": [
+              "",
+              "AVERAGE('corruption_perception_index'[cpi_score])"
+            ],
+            "lineageTag": "3c5112db-7975-47d7-9a06-231bcd9d31bb",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Avg CPI (Current Year)",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    [Avg CPI],",
+              "    FILTER(",
+              "        ALL('year'[year]),",
+              "        'year'[year] = [Current Year]",
+              "    )",
+              ")"
+            ],
+            "lineageTag": "7a2ecdc4-9634-4672-b696-a2572ac27ab0",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Avg CPI (Previous Year)",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    [Avg CPI],",
+              "    FILTER(",
+              "        ALL('year'[year]),              ",
+              "        'year'[year] = [Previous Year]",
+              "    )",
+              ")"
+            ],
+            "lineageTag": "56351aa4-8db0-4af9-9c35-f300603ebb0d",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Avg CPI Δ (Abs)",
+            "expression": [
+              "",
+              "VAR cur = [Avg CPI (Current Year)]",
+              "VAR prv = [Avg CPI (Previous Year)]",
+              "RETURN IF( NOT ISBLANK(prv), cur - prv )"
+            ],
+            "lineageTag": "63a40ca4-34f7-42c4-807e-2bc19f9b147f",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Avg CPI Δ (YoY %)",
+            "expression": [
+              "",
+              "VAR cur = [Avg CPI (Current Year)]",
+              "VAR prv = [Avg CPI (Previous Year)]",
+              "RETURN IF( NOT ISBLANK(prv), DIVIDE(cur - prv, prv) )"
+            ],
+            "lineageTag": "a7d7b9c2-7e4c-494e-aa03-b657e80562a4",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Avg CPI (Label)",
+            "expression": [
+              "",
+              "VAR cur = [Avg CPI (Current Year)]",
+              "VAR yoy = [Avg CPI Δ (YoY %)]",
+              "RETURN",
+              "\"Avg CPI: \" & FORMAT(cur, \"0.0\") &",
+              "\"  (\" & IF( NOT ISBLANK(yoy), FORMAT(yoy, \"+0.0%;-0.0%\"), \"n/a\" ) & \")\""
+            ],
+            "lineageTag": "b902437d-592e-4114-9cfa-1e55391fc7ce"
+          },
+          {
+            "name": "Avg CPI Over Years",
+            "expression": [
+              "",
+              "AVERAGE('corruption_perception_index'[cpi_score])"
+            ],
+            "lineageTag": "12bb5061-cc4d-4922-9f3e-105e8d56f12b",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          }
+        ],
+        "changedProperties": [
+          {
+            "property": "Name"
+          }
+        ],
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Table"
+          }
+        ]
+      },
+      {
+        "name": "country_general_info",
+        "lineageTag": "4304e516-a0df-4c06-8543-16f96880b544",
+        "columns": [
+          {
+            "name": "country_iso3code",
+            "dataType": "string",
+            "sourceColumn": "country_iso3code",
+            "lineageTag": "431d8192-f1a3-4d18-a9b2-1bb9b93d6eb5",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "country_iso2code",
+            "dataType": "string",
+            "sourceColumn": "country_iso2code",
+            "lineageTag": "660a703c-9382-4e09-a392-35a1a180a5c9",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "country_name",
+            "dataType": "string",
+            "sourceColumn": "country_name",
+            "lineageTag": "594013fa-501c-4ac5-853c-a1d8fac6f81e",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "region_id",
+            "dataType": "string",
+            "sourceColumn": "region_id",
+            "lineageTag": "683abc52-e624-45f0-9a11-4e87a8f15aef",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "country_income_level",
+            "dataType": "string",
+            "sourceColumn": "country_income_level",
+            "lineageTag": "d7de0df7-4dcf-4c19-a2a3-9cfe70da8b67",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "country_capital_city",
+            "dataType": "string",
+            "sourceColumn": "country_capital_city",
+            "lineageTag": "35e225e0-e4ed-4e5e-999d-9b76b128b5d3",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "country_longitude",
+            "dataType": "double",
+            "sourceColumn": "country_longitude",
+            "lineageTag": "e4ca4dd8-6f49-4924-9c48-6aed6b237e60",
+            "summarizeBy": "sum",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              },
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "country_latitude",
+            "dataType": "double",
+            "sourceColumn": "country_latitude",
+            "lineageTag": "c24b1ab5-2129-40b7-83e6-849258697d45",
+            "summarizeBy": "sum",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              },
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "country_general_info",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = PostgreSQL.Database(\"192.168.0.52:5555\", \"worldbank\"),",
+                "    thi_miniproject_country_general_info = Source{[Schema=\"thi_miniproject\",Item=\"country_general_info\"]}[Data]",
+                "in",
+                "    thi_miniproject_country_general_info"
+              ]
+            }
+          }
+        ],
+        "changedProperties": [
+          {
+            "property": "Name"
+          }
+        ],
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Table"
+          }
+        ]
+      },
+      {
+        "name": "region",
+        "lineageTag": "402075e6-d7d3-46cd-9563-ba9d37f0bf1b",
+        "columns": [
+          {
+            "name": "region_id",
+            "dataType": "string",
+            "sourceColumn": "region_id",
+            "lineageTag": "b64eeb56-d283-4d0b-86f1-04ef17ac13c6",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "region_iso2code",
+            "dataType": "string",
+            "sourceColumn": "region_iso2code",
+            "lineageTag": "9caa99e1-860e-478b-a462-aab07c97a378",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "region_name",
+            "dataType": "string",
+            "sourceColumn": "region_name",
+            "lineageTag": "d2ef45dd-1f2d-4e1c-8fea-9675f39a1701",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "region",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = PostgreSQL.Database(\"192.168.0.52:5555\", \"worldbank\"),",
+                "    thi_miniproject_region = Source{[Schema=\"thi_miniproject\",Item=\"region\"]}[Data]",
+                "in",
+                "    thi_miniproject_region"
+              ]
+            }
+          }
+        ],
+        "changedProperties": [
+          {
+            "property": "Name"
+          }
+        ],
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Table"
+          }
+        ]
+      },
+      {
+        "name": "wb_indicator_country_year_value",
+        "lineageTag": "84e1c60b-bd97-456a-8d93-f9d527cdb2e2",
+        "columns": [
+          {
+            "name": "indicator_id",
+            "dataType": "string",
+            "sourceColumn": "indicator_id",
+            "lineageTag": "10794358-b961-420d-a7d0-f75d59770563",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "country_iso3code",
+            "dataType": "string",
+            "sourceColumn": "country_iso3code",
+            "lineageTag": "42484e86-2f42-4a7d-8446-86e93cfc0b7c",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "year",
+            "dataType": "int64",
+            "sourceColumn": "year",
+            "formatString": "0",
+            "lineageTag": "96dbc53e-3061-4dfd-843f-a397062b0303",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "value",
+            "dataType": "double",
+            "sourceColumn": "value",
+            "lineageTag": "15f05d7c-3a88-4597-9e8b-7c7578ea45ea",
+            "summarizeBy": "sum",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              },
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "wb_indicator_country_year_value",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = PostgreSQL.Database(\"192.168.0.52:5555\", \"worldbank\"),",
+                "    thi_miniproject_wb_indicator_country_year_value = Source{[Schema=\"thi_miniproject\",Item=\"wb_indicator_country_year_value\"]}[Data]",
+                "in",
+                "    thi_miniproject_wb_indicator_country_year_value"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "GDP (All Countries)",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    SUM('wb_indicator_country_year_value'[value]),",
+              "    'wb_indicator_country_year_value'[indicator_id] = \"NY.GDP.MKTP.CD\"",
+              ")"
+            ],
+            "lineageTag": "687fc9a7-744b-485c-8a03-231268facf41",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "GDP (Region Aggregate)",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    SUM('wb_indicator_country_year_value'[value]),",
+              "    'wb_indicator_country_year_value'[indicator_id] = \"NY.GDP.MKTP.CD\"",
+              ")"
+            ],
+            "lineageTag": "43dc7c3b-e2ee-4a0a-9812-18af35c805f3",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "GDP per Capita",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    AVERAGE('wb_indicator_country_year_value'[value]),",
+              "    'wb_indicator_country_year_value'[indicator_id] = \"NY.GDP.PCAP.CD\"",
+              ")"
+            ],
+            "lineageTag": "006f97ec-34d7-43f8-af72-09d7f343f93f",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Total Population",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    SUM('wb_indicator_country_year_value'[value]),",
+              "    'wb_indicator_country_year_value'[indicator_id] = \"SP.POP.TOTL\"",
+              ")"
+            ],
+            "lineageTag": "a2c321f5-84ad-466c-a39a-4260cc606388",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Population Growth %",
+            "expression": [
+              "",
+              "VAR cur =",
+              "    CALCULATE(",
+              "        SUM('wb_indicator_country_year_value'[value]),",
+              "        'wb_indicator_country_year_value'[indicator_id] = \"SP.POP.TOTL\"",
+              "    )",
+              "VAR prev =",
+              "    CALCULATE(",
+              "        SUM('wb_indicator_country_year_value'[value]),",
+              "        'wb_indicator_country_year_value'[indicator_id] = \"SP.POP.TOTL\",",
+              "        DATEADD('year'[year], -1, YEAR)",
+              "    )",
+              "RETURN DIVIDE(cur - prev, prev)"
+            ],
+            "formatString": "0",
+            "lineageTag": "234852c2-bcfb-48d0-8d4b-ebdfaea330dd"
+          },
+          {
+            "name": "Life Expectancy",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    AVERAGE('wb_indicator_country_year_value'[value]),",
+              "    'wb_indicator_country_year_value'[indicator_id] = \"SP.DYN.LE00.IN\"",
+              ")"
+            ],
+            "lineageTag": "4b891ba0-3250-446d-aec1-56085055abc7",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Indicator Data Coverage (Rows)",
+            "expression": [
+              "",
+              "COUNTROWS('wb_indicator_country_year_value')"
+            ],
+            "formatString": "0",
+            "lineageTag": "c015080c-79e0-4466-bcca-29975f3a811a"
+          },
+          {
+            "name": "Indicator Rank by Data Coverage",
+            "expression": [
+              "",
+              "RANKX(",
+              "    ALL('wb_indicators'[indicator_id]),",
+              "    CALCULATE(",
+              "        COUNTROWS('wb_indicator_country_year_value')",
+              "    ),",
+              "    ,",
+              "    DESC,",
+              "    DENSE",
+              ")"
+            ],
+            "formatString": "0",
+            "lineageTag": "5d5729d1-2fb6-40a3-b52d-13adaa7c6df1"
+          },
+          {
+            "name": "Max Data Coverage Indicator",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    MAXX(",
+              "        VALUES('wb_indicators'[indicator_id]),",
+              "        COUNTROWS('wb_indicator_country_year_value')",
+              "    )",
+              ")"
+            ],
+            "formatString": "0",
+            "lineageTag": "e5f538c7-99fa-4f8d-852a-7d2cb1be9af1"
+          },
+          {
+            "name": "Topics per Indicator",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    DISTINCTCOUNT('wb_indicator_topics'[topic_id]),",
+              "    ALLEXCEPT('wb_indicator_topics', 'wb_indicator_topics'[indicator_id])",
+              ")"
+            ],
+            "formatString": "0",
+            "lineageTag": "10bbadf7-2c72-4c46-b02f-e2e90c795a35"
+          },
+          {
+            "name": "Indicator Rank by Topic Count",
+            "expression": [
+              "",
+              "RANKX(",
+              "    ALL('wb_indicators'[indicator_id]),",
+              "    [Topics per Indicator],",
+              "    ,",
+              "    DESC,",
+              "    DENSE",
+              ")"
+            ],
+            "formatString": "0",
+            "lineageTag": "f971370c-8dc9-44a5-b86f-d8a4d7aba9cf"
+          },
+          {
+            "name": "Max Topics per Indicator",
+            "expression": "MAXX(ALL('wb_indicators'), [Topics per Indicator])",
+            "formatString": "0",
+            "lineageTag": "8aa6055a-eb1b-4531-8df1-d43b668f284d"
+          },
+          {
+            "name": "Total Data Rows",
+            "expression": "COUNTROWS('wb_indicator_country_year_value')",
+            "formatString": "0",
+            "lineageTag": "851b723a-5a3f-481a-b39d-c989d9eac787"
+          }
+        ],
+        "changedProperties": [
+          {
+            "property": "Name"
+          }
+        ],
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Table"
+          }
+        ]
+      },
+      {
+        "name": "wb_indicator_topics",
+        "lineageTag": "e6a8fef7-9dc8-45c8-8317-6d57764fd994",
+        "columns": [
+          {
+            "name": "indicator_id",
+            "dataType": "string",
+            "sourceColumn": "indicator_id",
+            "lineageTag": "43d8efec-2ad0-4d24-bdb8-099f9411b1e2",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "topic_id",
+            "dataType": "int64",
+            "sourceColumn": "topic_id",
+            "formatString": "0",
+            "lineageTag": "22e0760f-8856-4fb0-8b9b-14745fc4e38d",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "wb_indicator_topics",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = PostgreSQL.Database(\"192.168.0.52:5555\", \"worldbank\"),",
+                "    thi_miniproject_wb_indicator_topics = Source{[Schema=\"thi_miniproject\",Item=\"wb_indicator_topics\"]}[Data]",
+                "in",
+                "    thi_miniproject_wb_indicator_topics"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Indicators per Topic",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    DISTINCTCOUNT('wb_indicator_topics'[indicator_id]),",
+              "    ALLEXCEPT('wb_topics', 'wb_topics'[topic_id])",
+              ")"
+            ],
+            "formatString": "0",
+            "lineageTag": "d01521a4-2fa2-4ab1-b524-572cadb7ae6c"
+          }
+        ],
+        "changedProperties": [
+          {
+            "property": "Name"
+          }
+        ],
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Table"
+          }
+        ]
+      },
+      {
+        "name": "wb_indicators",
+        "lineageTag": "c23c2fc7-f97d-4ef3-a5b3-ecde08bf6df1",
+        "columns": [
+          {
+            "name": "indicator_id",
+            "dataType": "string",
+            "sourceColumn": "indicator_id",
+            "lineageTag": "7a2f12db-c860-491d-bc59-183d17fc36c3",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "indicator_name",
+            "dataType": "string",
+            "sourceColumn": "indicator_name",
+            "lineageTag": "1239c800-56f3-40d7-8a74-32c03c091390",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "source_id",
+            "dataType": "int64",
+            "sourceColumn": "source_id",
+            "formatString": "0",
+            "lineageTag": "07b99762-28e9-4a70-b1ea-af593b2feabb",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "description",
+            "dataType": "string",
+            "sourceColumn": "description",
+            "lineageTag": "3287b5a7-a974-44fe-bd59-b2591551d228",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "wb_indicators",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = PostgreSQL.Database(\"192.168.0.52:5555\", \"worldbank\"),",
+                "    thi_miniproject_wb_indicators = Source{[Schema=\"thi_miniproject\",Item=\"wb_indicators\"]}[Data]",
+                "in",
+                "    thi_miniproject_wb_indicators"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Total Indicators",
+            "expression": "DISTINCTCOUNT('wb_indicators'[indicator_id])",
+            "formatString": "0",
+            "lineageTag": "d018616f-4295-4e18-81ae-4d8e8da95d41"
+          }
+        ],
+        "changedProperties": [
+          {
+            "property": "Name"
+          }
+        ],
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Table"
+          }
+        ]
+      },
+      {
+        "name": "wb_source",
+        "lineageTag": "83d6a176-7710-40cc-8893-f230f9e9187d",
+        "columns": [
+          {
+            "name": "source_id",
+            "dataType": "int64",
+            "sourceColumn": "source_id",
+            "formatString": "0",
+            "lineageTag": "43705c2b-6c9a-427f-a7cb-496235166c6d",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "source_name",
+            "dataType": "string",
+            "sourceColumn": "source_name",
+            "lineageTag": "03d7de83-4dbe-4562-9208-45c5e7ffa0db",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "source_code",
+            "dataType": "string",
+            "sourceColumn": "source_code",
+            "lineageTag": "2371b995-c4ce-4676-bd0b-20aa67f66adf",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "data_availability",
+            "dataType": "boolean",
+            "sourceColumn": "data_availability",
+            "formatString": "\"TRUE\";\"TRUE\";\"FALSE\"",
+            "lineageTag": "3a6a829a-2b68-472f-80f8-67504b1404e4",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "metadata_availability",
+            "dataType": "boolean",
+            "sourceColumn": "metadata_availability",
+            "formatString": "\"TRUE\";\"TRUE\";\"FALSE\"",
+            "lineageTag": "a86a316a-b3e7-4a01-b0c8-461da64c4837",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "concepts",
+            "dataType": "int64",
+            "sourceColumn": "concepts",
+            "formatString": "0",
+            "lineageTag": "1b595e4a-709b-4a8c-9bd5-f007a48b95a8",
+            "summarizeBy": "sum",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "last_updated",
+            "dataType": "dateTime",
+            "sourceColumn": "last_updated",
+            "formatString": "Long Date",
+            "lineageTag": "743fd090-fd8f-48f8-a4bb-59f2a3e4ec94",
+            "summarizeBy": "none",
+            "variations": [
+              {
+                "name": "Variation",
+                "relationship": "15de5c93-65ae-40ee-87c3-26022739bd15",
+                "defaultHierarchy": {
+                  "table": "LocalDateTable_975e0596-7eb4-4e36-a8a1-1797a3c3c926",
+                  "hierarchy": "Date Hierarchy"
+                },
+                "isDefault": true
+              }
+            ],
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              },
+              {
+                "name": "UnderlyingDateTimeDataType",
+                "value": "Date"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "wb_source",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = PostgreSQL.Database(\"192.168.0.52:5555\", \"worldbank\"),",
+                "    thi_miniproject_wb_source = Source{[Schema=\"thi_miniproject\",Item=\"wb_source\"]}[Data]",
+                "in",
+                "    thi_miniproject_wb_source"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Indicators per Source",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    DISTINCTCOUNT('wb_indicators'[indicator_id]),",
+              "    ALLEXCEPT('wb_source', 'wb_source'[source_id])",
+              ")"
+            ],
+            "formatString": "0",
+            "lineageTag": "98f8318a-6f68-484b-828c-7568797eada6"
+          },
+          {
+            "name": "Total Sources",
+            "expression": "DISTINCTCOUNT('wb_source'[source_id])",
+            "formatString": "0",
+            "lineageTag": "a8b645b5-c67b-46aa-8ec3-4bd7c656b1de"
+          }
+        ],
+        "changedProperties": [
+          {
+            "property": "Name"
+          }
+        ],
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Table"
+          }
+        ]
+      },
+      {
+        "name": "DateTableTemplate_6e79c609-f94a-4e61-910b-369474e63845",
+        "isHidden": true,
+        "isPrivate": true,
+        "lineageTag": "954aa709-3a07-4813-8f0b-566d9b43adad",
+        "columns": [
+          {
+            "type": "calculatedTableColumn",
+            "name": "Date",
+            "dataType": "dateTime",
+            "isNameInferred": true,
+            "isHidden": true,
+            "sourceColumn": "[Date]",
+            "formatString": "General Date",
+            "lineageTag": "5e1d547c-d3bb-4bf1-b39d-cccbb2c87e7f",
+            "dataCategory": "PaddedDateTableDates",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "User"
+              }
+            ]
+          },
+          {
+            "type": "calculated",
+            "name": "Year",
+            "dataType": "int64",
+            "isHidden": true,
+            "expression": "YEAR([Date])",
+            "formatString": "0",
+            "lineageTag": "a1b9bc70-d16f-4cee-8d9c-51b0907c88cf",
+            "dataCategory": "Years",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "User"
+              },
+              {
+                "name": "TemplateId",
+                "value": "Year"
+              }
+            ]
+          },
+          {
+            "type": "calculated",
+            "name": "MonthNo",
+            "dataType": "int64",
+            "isHidden": true,
+            "expression": "MONTH([Date])",
+            "formatString": "0",
+            "lineageTag": "c79b10ce-d3e5-4c8f-9443-1590188d1973",
+            "dataCategory": "MonthOfYear",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "User"
+              },
+              {
+                "name": "TemplateId",
+                "value": "MonthNumber"
+              }
+            ]
+          },
+          {
+            "type": "calculated",
+            "name": "Month",
+            "dataType": "string",
+            "isHidden": true,
+            "expression": "FORMAT([Date], \"MMMM\")",
+            "sortByColumn": "MonthNo",
+            "lineageTag": "aa818ae2-e01f-4e4f-9d32-b24b3ed70c95",
+            "dataCategory": "Months",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "User"
+              },
+              {
+                "name": "TemplateId",
+                "value": "Month"
+              }
+            ]
+          },
+          {
+            "type": "calculated",
+            "name": "QuarterNo",
+            "dataType": "int64",
+            "isHidden": true,
+            "expression": "INT(([MonthNo] + 2) / 3)",
+            "formatString": "0",
+            "lineageTag": "75f98691-15c0-46ba-9daa-643d8def61f6",
+            "dataCategory": "QuarterOfYear",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "User"
+              },
+              {
+                "name": "TemplateId",
+                "value": "QuarterNumber"
+              }
+            ]
+          },
+          {
+            "type": "calculated",
+            "name": "Quarter",
+            "dataType": "string",
+            "isHidden": true,
+            "expression": "\"Qtr \" & [QuarterNo]",
+            "sortByColumn": "QuarterNo",
+            "lineageTag": "b5374b53-b7fe-4c60-a971-6ca29ab50683",
+            "dataCategory": "Quarters",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "User"
+              },
+              {
+                "name": "TemplateId",
+                "value": "Quarter"
+              }
+            ]
+          },
+          {
+            "type": "calculated",
+            "name": "Day",
+            "dataType": "int64",
+            "isHidden": true,
+            "expression": "DAY([Date])",
+            "formatString": "0",
+            "lineageTag": "3badb2bc-2067-46e1-8c01-8503d7872950",
+            "dataCategory": "DayOfMonth",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "User"
+              },
+              {
+                "name": "TemplateId",
+                "value": "Day"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "DateTableTemplate_6e79c609-f94a-4e61-910b-369474e63845",
+            "mode": "import",
+            "source": {
+              "type": "calculated",
+              "expression": "Calendar(Date(2015,1,1), Date(2015,1,1))"
+            }
+          }
+        ],
+        "hierarchies": [
+          {
+            "name": "Date Hierarchy",
+            "lineageTag": "c981fdf6-e61e-473d-82d0-65e90c35cd83",
+            "levels": [
+              {
+                "name": "Year",
+                "ordinal": 0,
+                "column": "Year",
+                "lineageTag": "5f745e4a-65da-4a6b-a40b-0c7047a5fdf3"
+              },
+              {
+                "name": "Quarter",
+                "ordinal": 1,
+                "column": "Quarter",
+                "lineageTag": "a6bc8e6d-564a-4e27-91e4-42ee4e4c917c"
+              },
+              {
+                "name": "Month",
+                "ordinal": 2,
+                "column": "Month",
+                "lineageTag": "9539cf2b-8183-49a8-8e1e-51331557209f"
+              },
+              {
+                "name": "Day",
+                "ordinal": 3,
+                "column": "Day",
+                "lineageTag": "cfc6b4b8-ac3d-4112-8a87-d9842a56aeee"
+              }
+            ],
+            "annotations": [
+              {
+                "name": "TemplateId",
+                "value": "DateHierarchy"
+              }
+            ]
+          }
+        ],
+        "annotations": [
+          {
+            "name": "__PBI_TemplateDateTable",
+            "value": "true"
+          },
+          {
+            "name": "DefaultItem",
+            "value": "DateHierarchy"
+          }
+        ]
+      },
+      {
+        "name": "LocalDateTable_975e0596-7eb4-4e36-a8a1-1797a3c3c926",
+        "isHidden": true,
+        "showAsVariationsOnly": true,
+        "lineageTag": "7c740663-fc56-4f19-827c-4da843af0eda",
+        "columns": [
+          {
+            "type": "calculatedTableColumn",
+            "name": "Date",
+            "dataType": "dateTime",
+            "isNameInferred": true,
+            "isHidden": true,
+            "sourceColumn": "[Date]",
+            "formatString": "General Date",
+            "lineageTag": "8f399d1d-15fc-42df-b2ab-903927dcd18e",
+            "dataCategory": "PaddedDateTableDates",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "User"
+              }
+            ]
+          },
+          {
+            "type": "calculated",
+            "name": "Year",
+            "dataType": "int64",
+            "isHidden": true,
+            "expression": "YEAR([Date])",
+            "formatString": "0",
+            "lineageTag": "03bcc64c-a937-4fea-94e4-8430a4ba959d",
+            "dataCategory": "Years",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "User"
+              },
+              {
+                "name": "TemplateId",
+                "value": "Year"
+              }
+            ]
+          },
+          {
+            "type": "calculated",
+            "name": "MonthNo",
+            "dataType": "int64",
+            "isHidden": true,
+            "expression": "MONTH([Date])",
+            "formatString": "0",
+            "lineageTag": "04e77eea-a179-4709-ac46-7ef08689ca41",
+            "dataCategory": "MonthOfYear",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "User"
+              },
+              {
+                "name": "TemplateId",
+                "value": "MonthNumber"
+              }
+            ]
+          },
+          {
+            "type": "calculated",
+            "name": "Month",
+            "dataType": "string",
+            "isHidden": true,
+            "expression": "FORMAT([Date], \"MMMM\")",
+            "sortByColumn": "MonthNo",
+            "lineageTag": "c54c3d05-46a8-4694-b8e5-888f62b70c57",
+            "dataCategory": "Months",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "User"
+              },
+              {
+                "name": "TemplateId",
+                "value": "Month"
+              }
+            ]
+          },
+          {
+            "type": "calculated",
+            "name": "QuarterNo",
+            "dataType": "int64",
+            "isHidden": true,
+            "expression": "INT(([MonthNo] + 2) / 3)",
+            "formatString": "0",
+            "lineageTag": "515ac664-1231-485e-bd19-ec99c9901866",
+            "dataCategory": "QuarterOfYear",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "User"
+              },
+              {
+                "name": "TemplateId",
+                "value": "QuarterNumber"
+              }
+            ]
+          },
+          {
+            "type": "calculated",
+            "name": "Quarter",
+            "dataType": "string",
+            "isHidden": true,
+            "expression": "\"Qtr \" & [QuarterNo]",
+            "sortByColumn": "QuarterNo",
+            "lineageTag": "44d246a0-272d-4891-b09f-05238b954532",
+            "dataCategory": "Quarters",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "User"
+              },
+              {
+                "name": "TemplateId",
+                "value": "Quarter"
+              }
+            ]
+          },
+          {
+            "type": "calculated",
+            "name": "Day",
+            "dataType": "int64",
+            "isHidden": true,
+            "expression": "DAY([Date])",
+            "formatString": "0",
+            "lineageTag": "e4fff815-ef89-4148-9e82-e821a95aa1ab",
+            "dataCategory": "DayOfMonth",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "User"
+              },
+              {
+                "name": "TemplateId",
+                "value": "Day"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "LocalDateTable_975e0596-7eb4-4e36-a8a1-1797a3c3c926",
+            "mode": "import",
+            "source": {
+              "type": "calculated",
+              "expression": "Calendar(Date(Year(MIN('wb_source'[last_updated])), 1, 1), Date(Year(MAX('wb_source'[last_updated])), 12, 31))"
+            }
+          }
+        ],
+        "hierarchies": [
+          {
+            "name": "Date Hierarchy",
+            "lineageTag": "b319f5d5-16f5-4976-93c0-b3556410d28f",
+            "levels": [
+              {
+                "name": "Year",
+                "ordinal": 0,
+                "column": "Year",
+                "lineageTag": "eae4c021-ceaa-455d-b778-537492f69ca2"
+              },
+              {
+                "name": "Quarter",
+                "ordinal": 1,
+                "column": "Quarter",
+                "lineageTag": "4c732033-8e5a-41c6-a2c6-b734d31b6677"
+              },
+              {
+                "name": "Month",
+                "ordinal": 2,
+                "column": "Month",
+                "lineageTag": "f4b47b5d-094d-4d17-8491-97f3e06d06b2"
+              },
+              {
+                "name": "Day",
+                "ordinal": 3,
+                "column": "Day",
+                "lineageTag": "6d1b13ff-fa08-4b55-ab95-b51946eb41b0"
+              }
+            ],
+            "annotations": [
+              {
+                "name": "TemplateId",
+                "value": "DateHierarchy"
+              }
+            ]
+          }
+        ],
+        "annotations": [
+          {
+            "name": "__PBI_LocalDateTable",
+            "value": "true"
+          }
+        ]
+      },
+      {
+        "name": "wb_topics",
+        "lineageTag": "07827935-bc00-4c24-a3f9-04241a331a83",
+        "columns": [
+          {
+            "name": "topic_id",
+            "dataType": "int64",
+            "sourceColumn": "topic_id",
+            "formatString": "0",
+            "lineageTag": "3018723c-cb1d-4f9f-a410-3e773a0d7a89",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "topic_name",
+            "dataType": "string",
+            "sourceColumn": "topic_name",
+            "lineageTag": "adc1c5b1-3a4a-4b6f-a47f-3ca54977f4f8",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "description",
+            "dataType": "string",
+            "sourceColumn": "description",
+            "lineageTag": "69c360e4-69b3-4118-984c-ef8e4bdcd8ae",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "wb_topics",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = PostgreSQL.Database(\"192.168.0.52:5555\", \"worldbank\"),",
+                "    thi_miniproject_wb_topics = Source{[Schema=\"thi_miniproject\",Item=\"wb_topics\"]}[Data]",
+                "in",
+                "    thi_miniproject_wb_topics"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Total Topics",
+            "expression": "DISTINCTCOUNT('wb_topics'[topic_id])",
+            "formatString": "0",
+            "lineageTag": "26d5dd47-18ac-43bf-840c-6f8fbcc53cce"
+          }
+        ],
+        "changedProperties": [
+          {
+            "property": "Name"
+          }
+        ],
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Table"
+          }
+        ]
+      },
+      {
+        "name": "world_happiness_report",
+        "lineageTag": "679e4735-b53a-4815-8aba-d99c0bd5962b",
+        "columns": [
+          {
+            "name": "country_iso3code",
+            "dataType": "string",
+            "sourceColumn": "country_iso3code",
+            "lineageTag": "8657f229-4fbb-44ee-b020-c987df4dc627",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "year",
+            "dataType": "int64",
+            "sourceColumn": "year",
+            "formatString": "0",
+            "lineageTag": "4e2750ce-e4aa-4209-9c51-3f62b37f2db3",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "happiness_score",
+            "dataType": "double",
+            "sourceColumn": "happiness_score",
+            "lineageTag": "b0d85566-f210-4e49-8ec9-eb38c538eaa0",
+            "summarizeBy": "sum",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              },
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "world_happiness_report",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = PostgreSQL.Database(\"192.168.0.52:5555\", \"worldbank\"),",
+                "    thi_miniproject_world_happiness_report = Source{[Schema=\"thi_miniproject\",Item=\"world_happiness_report\"]}[Data]",
+                "in",
+                "    thi_miniproject_world_happiness_report"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Avg Happiness",
+            "expression": [
+              "",
+              "AVERAGE('world_happiness_report'[happiness_score])"
+            ],
+            "lineageTag": "0f6299c2-ea18-4ff0-840f-73efca92acae",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Avg Happiness (Current Year)",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    [Avg Happiness],",
+              "    KEEPFILTERS( TREATAS( { [Current Year] }, 'year'[year] ) )",
+              ")"
+            ],
+            "lineageTag": "14c24b8b-fd3c-4371-b7f0-aa99bd0ca29e",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Avg Happiness (Previous Year)",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    [Avg Happiness],",
+              "    KEEPFILTERS( TREATAS( { [Previous Year] }, 'year'[year] ) )",
+              ")"
+            ],
+            "lineageTag": "40fea42c-a962-4ace-bb67-145b25298119",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Avg Happiness Δ (Abs)",
+            "expression": [
+              "",
+              "VAR cur = [Avg Happiness (Current Year)]",
+              "VAR prv = [Avg Happiness (Previous Year)]",
+              "RETURN IF( NOT ISBLANK(prv), cur - prv )"
+            ],
+            "lineageTag": "c6ce8b4f-1e9f-4391-bbf6-1de438c4351e",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Avg Happiness Δ (YoY %)",
+            "expression": [
+              "",
+              "VAR cur = [Avg Happiness (Current Year)]",
+              "VAR prv = [Avg Happiness (Previous Year)]",
+              "RETURN IF( NOT ISBLANK(prv), DIVIDE(cur - prv, prv) )"
+            ],
+            "lineageTag": "a8b674e8-f9d1-4f48-b25a-421dcdd3b678",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Avg Happiness (Label)",
+            "expression": [
+              "",
+              "VAR cur = [Avg Happiness (Current Year)]",
+              "VAR yoy = [Avg Happiness Δ (YoY %)]",
+              "RETURN",
+              "\"Avg Happiness: \" & FORMAT(cur, \"0.0\") &",
+              "\"  (\" & IF( NOT ISBLANK(yoy), FORMAT(yoy, \"+0.0%;-0.0%\"), \"n/a\" ) & \")\""
+            ],
+            "lineageTag": "6f5bd9cc-5390-4c71-836a-936e3200975d"
+          },
+          {
+            "name": "Avg Happiness Over Years",
+            "expression": [
+              "",
+              "AVERAGE('world_happiness_report'[happiness_score])"
+            ],
+            "lineageTag": "5b84d791-2d66-44de-92e3-8a8c72e3366a",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          }
+        ],
+        "changedProperties": [
+          {
+            "property": "Name"
+          }
+        ],
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Exception"
+          }
+        ]
+      },
+      {
+        "name": "year",
+        "lineageTag": "8db666aa-c5ee-4120-81f2-38d87d5b4c39",
+        "columns": [
+          {
+            "name": "year",
+            "dataType": "int64",
+            "sourceColumn": "year",
+            "formatString": "0",
+            "lineageTag": "c29bde1b-c942-465a-b059-c255a85a11e9",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "year",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = PostgreSQL.Database(\"192.168.0.52:5555\", \"worldbank\"),",
+                "    thi_miniproject_year = Source{[Schema=\"thi_miniproject\",Item=\"year\"]}[Data]",
+                "in",
+                "    thi_miniproject_year"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Current Year",
+            "expression": [
+              "",
+              "VAR y = SELECTEDVALUE('year'[year])",
+              "RETURN IF( NOT ISBLANK(y), y, MAX('year'[year]) )"
+            ],
+            "formatString": "0",
+            "lineageTag": "315e14b8-47e3-4877-82bc-33e6cad0f9d6"
+          },
+          {
+            "name": "Previous Year",
+            "expression": [
+              "",
+              "[Current Year] - 1"
+            ],
+            "formatString": "0",
+            "lineageTag": "694feb80-b1a4-48f1-856e-5c7c58e812d2"
+          }
+        ],
+        "changedProperties": [
+          {
+            "property": "Name"
+          }
+        ],
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Table"
+          }
+        ]
+      },
+      {
+        "name": "Overview Metric",
+        "lineageTag": "642e20ab-ae19-4593-a36a-3b7866ea5e0a",
+        "columns": [
+          {
+            "type": "calculatedTableColumn",
+            "name": "Label",
+            "dataType": "string",
+            "isNameInferred": true,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[Label]",
+            "lineageTag": "c38058b8-7e1d-40fa-a1fc-c33f7aed9360",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Overview Metric",
+            "mode": "import",
+            "source": {
+              "type": "calculated",
+              "expression": [
+                "",
+                "DATATABLE(",
+                "  \"Label\", STRING,",
+                "  {",
+                "    {\"CPI Score\"},",
+                "    {\"Happiness Score\"},",
+                "    {\"GDP per capita (US$)\"}",
+                "  }",
+                ")"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Overview Title",
+            "expression": [
+              "",
+              "\"Global Overview — \" &",
+              "SELECTEDVALUE('Overview Metric'[Label],\"Select a metric\") &",
+              "\" (\" & SELECTEDVALUE('year'[year],\"All years\") & \")\""
+            ],
+            "lineageTag": "1f938b64-6a88-490a-b39b-640a8e8af047"
+          }
+        ],
+        "annotations": [
+          {
+            "name": "PBI_Id",
+            "value": "9d4640ccd3f9446bac0889d6577093b3"
+          }
+        ]
+      },
+      {
+        "name": "TopBottom Choice",
+        "lineageTag": "68c78577-8cd1-4709-8738-f2ec0292f217",
+        "columns": [
+          {
+            "type": "calculatedTableColumn",
+            "name": "Choice",
+            "dataType": "string",
+            "isNameInferred": true,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[Choice]",
+            "lineageTag": "aa15b2f9-e12f-4e95-a885-9370375327a4",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "TopBottom Choice",
+            "mode": "import",
+            "source": {
+              "type": "calculated",
+              "expression": [
+                "",
+                "DATATABLE(\"Choice\", STRING, { {\"Top 10\"}, {\"Bottom 10\"} })"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Overview Selected Value",
+            "expression": [
+              "",
+              "VAR sel = SELECTEDVALUE('Overview Metric'[Label])",
+              "RETURN",
+              "SWITCH(",
+              "    sel,",
+              "    \"CPI Score\",",
+              "        AVERAGE('corruption_perception_index'[cpi_score]),",
+              "    \"Happiness Score\",",
+              "        AVERAGE('world_happiness_report'[happiness_score]),",
+              "    \"GDP per capita (US$)\",",
+              "        CALCULATE(",
+              "            AVERAGE('wb_indicator_country_year_value'[value]),",
+              "            'wb_indicator_country_year_value'[indicator_id] = \"NY.GDP.PCAP.CD\"",
+              "        ),",
+              "    BLANK()",
+              ")"
+            ],
+            "lineageTag": "e87c445a-e390-44fc-8fca-f22566b16393"
+          },
+          {
+            "name": "Countries per Income Level",
+            "expression": [
+              "",
+              "DISTINCTCOUNT('country_general_info'[country_iso3code])"
+            ],
+            "formatString": "0",
+            "lineageTag": "cbc4f9a9-5340-4ef2-a84c-b441e8f1df66"
+          },
+          {
+            "name": "Total Countries",
+            "expression": [
+              "",
+              "DISTINCTCOUNT('country_general_info'[country_iso3code])"
+            ],
+            "formatString": "0",
+            "lineageTag": "54d4b349-8360-43fe-9df5-607d63faae2e"
+          },
+          {
+            "name": "Countries & Regions Summary",
+            "expression": [
+              "",
+              "\"🌍 Countries: \" &",
+              "FORMAT([Total Countries], \"#,0\") &",
+              "\"  |  Regions: \" &",
+              "FORMAT([Total Regions], \"#,0\")"
+            ],
+            "lineageTag": "c7ef092d-cec0-4092-91b1-e0221aa2bfb8"
+          },
+          {
+            "name": "Total Regions",
+            "expression": [
+              "",
+              "DISTINCTCOUNT('region'[region_name])"
+            ],
+            "formatString": "0",
+            "lineageTag": "690d1bb9-9d0a-4769-8972-1ccaea53639e"
+          }
+        ],
+        "annotations": [
+          {
+            "name": "PBI_Id",
+            "value": "5fc0126d0d28409287e19e5d00a53ffb"
+          }
+        ]
+      },
+      {
+        "name": "CPI & WHR Trend",
+        "lineageTag": "f9cfc529-3dc5-45bf-b7ce-254c912364b2",
+        "columns": [
+          {
+            "type": "calculatedTableColumn",
+            "name": "CPI & WHR Trend",
+            "dataType": "string",
+            "isNameInferred": false,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[Value1]",
+            "sortByColumn": "CPI & WHR Trend Order",
+            "lineageTag": "8ddc2647-33fa-4a7a-9f95-b22cbdb60796",
+            "summarizeBy": "none",
+            "relatedColumnDetails": {
+              "groupByColumns": [
+                {
+                  "groupingColumn": "CPI & WHR Trend Fields"
+                }
+              ]
+            },
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "type": "calculatedTableColumn",
+            "name": "CPI & WHR Trend Fields",
+            "dataType": "string",
+            "isNameInferred": false,
+            "isDataTypeInferred": true,
+            "isHidden": true,
+            "sourceColumn": "[Value2]",
+            "sortByColumn": "CPI & WHR Trend Order",
+            "lineageTag": "714cb627-6bf3-4a1e-9f0c-1f52f5170b1c",
+            "summarizeBy": "none",
+            "extendedProperties": [
+              {
+                "type": "json",
+                "name": "ParameterMetadata",
+                "value": {
+                  "version": 3,
+                  "kind": 2
+                }
+              }
+            ],
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "type": "calculatedTableColumn",
+            "name": "CPI & WHR Trend Order",
+            "dataType": "int64",
+            "isNameInferred": false,
+            "isDataTypeInferred": true,
+            "isHidden": true,
+            "sourceColumn": "[Value3]",
+            "formatString": "0",
+            "lineageTag": "96c4e087-baa4-4266-a3b7-dd4ec7ad42bd",
+            "summarizeBy": "sum",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "CPI & WHR Trend",
+            "mode": "import",
+            "source": {
+              "type": "calculated",
+              "expression": [
+                "{",
+                "    (\"Avg CPI Over Years\", NAMEOF('corruption_perception_index'[Avg CPI Over Years]), 0),",
+                "    (\"Avg Happiness Over Years\", NAMEOF('world_happiness_report'[Avg Happiness Over Years]), 1)",
+                "}"
+              ]
+            }
+          }
+        ],
+        "annotations": [
+          {
+            "name": "PBI_Id",
+            "value": "fec5f2393ea248a9bd8cb6c470a613e2"
+          }
+        ]
+      },
+      {
+        "name": "Bubble Size Selector",
+        "lineageTag": "ec561540-9ba9-486d-ba75-75f4092f3caa",
+        "columns": [
+          {
+            "type": "calculatedTableColumn",
+            "name": "Bubble Size Selector",
+            "dataType": "string",
+            "isNameInferred": false,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[Value1]",
+            "sortByColumn": "Bubble Size Selector Order",
+            "lineageTag": "934d01fd-a8f2-4d0e-afc1-6d676295e7c9",
+            "summarizeBy": "none",
+            "relatedColumnDetails": {
+              "groupByColumns": [
+                {
+                  "groupingColumn": "Bubble Size Selector Fields"
+                }
+              ]
+            },
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "type": "calculatedTableColumn",
+            "name": "Bubble Size Selector Fields",
+            "dataType": "string",
+            "isNameInferred": false,
+            "isDataTypeInferred": true,
+            "isHidden": true,
+            "sourceColumn": "[Value2]",
+            "sortByColumn": "Bubble Size Selector Order",
+            "lineageTag": "20797a59-dc46-4fc7-838a-230a47ae932b",
+            "summarizeBy": "none",
+            "extendedProperties": [
+              {
+                "type": "json",
+                "name": "ParameterMetadata",
+                "value": {
+                  "version": 3,
+                  "kind": 2
+                }
+              }
+            ],
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "type": "calculatedTableColumn",
+            "name": "Bubble Size Selector Order",
+            "dataType": "int64",
+            "isNameInferred": false,
+            "isDataTypeInferred": true,
+            "isHidden": true,
+            "sourceColumn": "[Value3]",
+            "formatString": "0",
+            "lineageTag": "4414ef32-a7de-425a-bc5f-88803b39289e",
+            "summarizeBy": "sum",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Bubble Size Selector",
+            "mode": "import",
+            "source": {
+              "type": "calculated",
+              "expression": [
+                "{",
+                "    (\"GDP per Capita\", NAMEOF('wb_indicator_country_year_value'[GDP per Capita]), 0),",
+                "    (\"Life Expectancy\", NAMEOF('wb_indicator_country_year_value'[Life Expectancy]), 1)",
+                "}"
+              ]
+            }
+          }
+        ],
+        "annotations": [
+          {
+            "name": "PBI_Id",
+            "value": "ffb6af7635844a119ea048f444644878"
+          }
+        ]
+      },
+      {
+        "name": "Economics Indicators",
+        "lineageTag": "f41dadf5-f926-4a87-89fc-3ba3ed00f5b0",
+        "columns": [
+          {
+            "type": "calculatedTableColumn",
+            "name": "Label",
+            "dataType": "string",
+            "isNameInferred": true,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[Label]",
+            "lineageTag": "c58479ed-e6ef-4c1b-8377-ea95eb24da5e",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "type": "calculatedTableColumn",
+            "name": "IndicatorID",
+            "dataType": "string",
+            "isNameInferred": true,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[IndicatorID]",
+            "lineageTag": "c894306a-2676-4be8-b168-89940ddcf56f",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Economics Indicators",
+            "mode": "import",
+            "source": {
+              "type": "calculated",
+              "expression": [
+                "",
+                "DATATABLE(",
+                "  \"Label\", STRING, \"IndicatorID\", STRING,",
+                "  {",
+                "    {\"GDP per capita (US$ current)\", \"NY.GDP.PCAP.CD\"},",
+                "    {\"GDP growth (annual %)\",        \"NY.GDP.MKTP.KD.ZG\"},",
+                "    {\"Imports (US$ current)\",        \"NE.IMP.GNFS.CD\"},",
+                "    {\"Imports (% of GDP)\",           \"NE.IMP.GNFS.ZS\"},",
+                "    {\"Exports (US$ current)\",        \"NE.EXP.GNFS.CD\"},",
+                "    {\"Exports (% of GDP)\",           \"NE.EXP.GNFS.ZS\"},",
+                "    {\"Household consumption (US$)\",  \"NE.CON.PRVT.CD\"},     ",
+                "    {\"FDI net inflows (US$)\",        \"BX.KLT.DINV.CD.WD\"},",
+                "    {\"Inflation, CPI (annual %)\",    \"FP.CPI.TOTL.ZG\"},",
+                "    {\"Net trade (% of GDP)\",         \"NE.RSB.GNFS.ZS\"},     ",
+                "    {\"Central govt debt (% GDP)\",    \"GC.DOD.TOTL.GD.ZS\"}   ",
+                "  }",
+                ")"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Selected Econ Indicator ID",
+            "expression": [
+              "",
+              "SELECTEDVALUE('Economics Indicators'[IndicatorID])"
+            ],
+            "lineageTag": "ecdc4dd4-0c45-4733-aadd-8fd77ecd8a24"
+          },
+          {
+            "name": "Econ Value",
+            "expression": [
+              "",
+              "VAR ind = [Selected Econ Indicator ID]",
+              "RETURN",
+              "CALCULATE(",
+              "  AVERAGE('wb_indicator_country_year_value'[value]),",
+              "  'wb_indicator_country_year_value'[indicator_id] = ind",
+              ")"
+            ],
+            "lineageTag": "b701df3b-0db1-4ce2-a484-ad794cd138b0",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Exports USD",
+            "expression": [
+              "",
+              "CALCULATE( SUM('wb_indicator_country_year_value'[value]),",
+              "           'wb_indicator_country_year_value'[indicator_id] = \"NE.EXP.GNFS.CD\")"
+            ],
+            "lineageTag": "6dfe90ec-979c-4422-a033-bfadf9db9b91",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Imports USD",
+            "expression": [
+              "",
+              "CALCULATE( SUM('wb_indicator_country_year_value'[value]),",
+              "           'wb_indicator_country_year_value'[indicator_id] = \"NE.IMP.GNFS.CD\")"
+            ],
+            "lineageTag": "89f2b7dc-ab0a-4536-a836-ad113a24e652",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Exports % GDP",
+            "expression": [
+              "",
+              "CALCULATE( AVERAGE('wb_indicator_country_year_value'[value]),",
+              "           'wb_indicator_country_year_value'[indicator_id] = \"NE.EXP.GNFS.ZS\")"
+            ],
+            "lineageTag": "215c2639-2f43-407f-bf30-34f64e99d586",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Imports % GDP",
+            "expression": [
+              "",
+              "CALCULATE( AVERAGE('wb_indicator_country_year_value'[value]),",
+              "           'wb_indicator_country_year_value'[indicator_id] = \"NE.IMP.GNFS.ZS\")"
+            ],
+            "lineageTag": "fa183b04-c270-46f5-93f9-4ef19bf6d804",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Trade Balance USD",
+            "expression": "[Exports USD] - [Imports USD]",
+            "lineageTag": "206f71e8-bd83-4d8b-a469-36954a9d227c",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Trade Balance % GDP",
+            "expression": [
+              "",
+              "VAR expg = [Exports % GDP]",
+              "VAR impg = [Imports % GDP]",
+              "RETURN expg - impg"
+            ],
+            "lineageTag": "da3136ef-1237-43dd-ae34-41578cf38fac",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Openness % GDP",
+            "expression": "[Exports % GDP] + [Imports % GDP]",
+            "lineageTag": "56868c15-6b3e-469a-b20e-0e002db93de5",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "GDP per Capita (US$)",
+            "expression": [
+              "",
+              "CALCULATE( AVERAGE('wb_indicator_country_year_value'[value]),",
+              "           'wb_indicator_country_year_value'[indicator_id] = \"NY.GDP.PCAP.CD\")"
+            ],
+            "lineageTag": "6a5fde22-935a-4098-bcf8-69d42cd3426a",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "GDP Growth %",
+            "expression": [
+              "",
+              "CALCULATE( AVERAGE('wb_indicator_country_year_value'[value]),",
+              "           'wb_indicator_country_year_value'[indicator_id] = \"NY.GDP.MKTP.KD.ZG\")"
+            ],
+            "lineageTag": "a4a39eab-8e24-4b25-8421-caf1cf0eac39",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Household Consumption (US$)",
+            "expression": [
+              "",
+              "CALCULATE( SUM('wb_indicator_country_year_value'[value]),",
+              "           'wb_indicator_country_year_value'[indicator_id] = \"NE.CON.PRVT.CD\")"
+            ],
+            "lineageTag": "09a80abc-e04f-418b-9a39-9ccd8e07b9ba",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "FDI Net Inflows (US$)",
+            "expression": [
+              "",
+              "CALCULATE( SUM('wb_indicator_country_year_value'[value]),",
+              "           'wb_indicator_country_year_value'[indicator_id] = \"BX.KLT.DINV.CD.WD\")"
+            ],
+            "lineageTag": "6a4e62a3-92a4-48f6-b2df-be91ca09a818",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Inflation CPI %",
+            "expression": [
+              "",
+              "CALCULATE( AVERAGE('wb_indicator_country_year_value'[value]),",
+              "           'wb_indicator_country_year_value'[indicator_id] = \"FP.CPI.TOTL.ZG\")"
+            ],
+            "lineageTag": "591b04dc-469b-450b-97f4-cfab83f0eb11",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Govt Debt % GDP",
+            "expression": [
+              "",
+              "CALCULATE( AVERAGE('wb_indicator_country_year_value'[value]),",
+              "           'wb_indicator_country_year_value'[indicator_id] = \"GC.DOD.TOTL.GD.ZS\")"
+            ],
+            "lineageTag": "7f22675c-d4c7-4e9c-ab68-0526b0a87220",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Countries Covered (current context)",
+            "expression": [
+              "",
+              "DISTINCTCOUNT('country_general_info'[country_iso3code])"
+            ],
+            "formatString": "0",
+            "lineageTag": "00c18da6-915c-4cdb-b81d-8898a3d544b6"
+          },
+          {
+            "name": "Government Debt % GDP",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    AVERAGE('wb_indicator_country_year_value'[value]),",
+              "    'wb_indicator_country_year_value'[indicator_id] = \"GC.DOD.TOTL.GD.ZS\"",
+              ")"
+            ],
+            "lineageTag": "ccc7c410-16d8-450b-99c5-2217dcc9d275",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Govt Edu Expenditure % of Govt",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    AVERAGE('wb_indicator_country_year_value'[value]),",
+              "    'wb_indicator_country_year_value'[indicator_id] = \"SE.XPD.TOTL.GB.ZS\"",
+              ")"
+            ],
+            "lineageTag": "7ca50241-0c9f-4f5d-b0cc-1c38fa27361a",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          }
+        ],
+        "annotations": [
+          {
+            "name": "PBI_Id",
+            "value": "85f1003d0ac74ef6974321ce43f040d5"
+          }
+        ]
+      },
+      {
+        "name": "Demographics & Social",
+        "lineageTag": "c9eba6cb-52ca-4dd2-840e-591f0755d4e7",
+        "columns": [
+          {
+            "type": "calculatedTableColumn",
+            "name": "Label",
+            "dataType": "string",
+            "isNameInferred": true,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[Label]",
+            "lineageTag": "0c3fdb60-34f7-48c3-a107-17dbde6126e6",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "type": "calculatedTableColumn",
+            "name": "IndicatorID",
+            "dataType": "string",
+            "isNameInferred": true,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[IndicatorID]",
+            "lineageTag": "85607ef3-ddc9-4a40-9296-ba729eb91cfd",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "type": "calculatedTableColumn",
+            "name": "Agg",
+            "dataType": "string",
+            "isNameInferred": true,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[Agg]",
+            "lineageTag": "f961d6c5-8b11-4369-8b58-adc51f1efa18",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Demographics & Social",
+            "mode": "import",
+            "source": {
+              "type": "calculated",
+              "expression": [
+                "",
+                "DATATABLE(",
+                "    \"Label\", STRING,",
+                "    \"IndicatorID\", STRING,",
+                "    \"Agg\", STRING,      ",
+                "    {",
+                "        {\"Total population\",                              \"SP.POP.TOTL\",          \"SUM\"},",
+                "        {\"Population growth (annual %)\",                  \"SP.POP.GROW\",          \"AVG\"},",
+                "        {\"Urban population (% of total)\",                 \"SP.URB.TOTL.IN.ZS\",    \"AVG\"},",
+                "        {\"Population density (people per sq. km)\",        \"EN.POP.DNST\",          \"AVG\"},",
+                "",
+                "        {\"Birth rate (per 1,000)\",                        \"SP.DYN.CBRT.IN\",       \"AVG\"},",
+                "        {\"Death rate (per 1,000)\",                        \"SP.DYN.CDRT.IN\",       \"AVG\"},",
+                "        {\"Fertility rate (births per woman)\",             \"SP.DYN.TFRT.IN\",       \"AVG\"},",
+                "        {\"Life expectancy at birth (years)\",              \"SP.DYN.LE00.IN\",       \"AVG\"},",
+                "",
+                "        {\"Age dependency ratio (% of working-age)\",       \"SP.POP.DPND\",          \"AVG\"},",
+                "        {\"Female population (% of total)\",                \"SP.POP.TOTL.FE.ZS\",    \"AVG\"},",
+                "        {\"Female labor force participation (%)\",          \"SL.TLF.CACT.FE.ZS\",    \"AVG\"},",
+                "        {\"Labor force participation rate, total (%)\",     \"SL.TLF.CACT.ZS\",       \"AVG\"},",
+                "",
+                "        {\"Gini index (inequality)\",                       \"SI.POV.GINI\",          \"AVG\"},",
+                "        {\"Poverty headcount (% below $3.65, 2017 PPP)\",   \"SI.POV.LMIC\",          \"AVG\"}",
+                "    }",
+                ")"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Population Density (people per sq. km)",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    AVERAGE('wb_indicator_country_year_value'[value]),",
+              "    'wb_indicator_country_year_value'[indicator_id] = \"EN.POP.DNST\"",
+              ")"
+            ],
+            "lineageTag": "faf258e2-149e-43c9-a51a-431038ae07ee",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Urban Population % of Total",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    AVERAGE('wb_indicator_country_year_value'[value]),",
+              "    'wb_indicator_country_year_value'[indicator_id] = \"SP.URB.TOTL.IN.ZS\"",
+              ")"
+            ],
+            "lineageTag": "bb03f45b-91a9-4952-92f3-2f5b35ac1c5b",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Birth Rate (per 1,000 people)",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    AVERAGE('wb_indicator_country_year_value'[value]),",
+              "    'wb_indicator_country_year_value'[indicator_id] = \"SP.DYN.CBRT.IN\"",
+              ")"
+            ],
+            "lineageTag": "2b8b7aa7-9e71-4fe8-9fed-4f0e89d3f9d9",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Death Rate (per 1,000 people)",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    AVERAGE('wb_indicator_country_year_value'[value]),",
+              "    'wb_indicator_country_year_value'[indicator_id] = \"SP.DYN.CDRT.IN\"",
+              ")"
+            ],
+            "lineageTag": "b586db95-2dd3-401e-8d99-62e859a982c2",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Fertility Rate (births per woman)",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    AVERAGE('wb_indicator_country_year_value'[value]),",
+              "    'wb_indicator_country_year_value'[indicator_id] = \"SP.DYN.TFRT.IN\"",
+              ")"
+            ],
+            "lineageTag": "e00a6f39-36bd-4928-b6a4-0ce1b8d15a6c",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Life Expectancy (years)",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    AVERAGE('wb_indicator_country_year_value'[value]),",
+              "    'wb_indicator_country_year_value'[indicator_id] = \"SP.DYN.LE00.IN\"",
+              ")"
+            ],
+            "lineageTag": "1f9a2f7d-ea20-455e-a3df-6573a94124c9",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Age Dependency Ratio (% of working-age pop)",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    AVERAGE('wb_indicator_country_year_value'[value]),",
+              "    'wb_indicator_country_year_value'[indicator_id] = \"SP.POP.DPND\"",
+              ")"
+            ],
+            "lineageTag": "c78cc7c1-cd80-441d-a933-9e3366f77a41",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Female Population % of Total",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    AVERAGE('wb_indicator_country_year_value'[value]),",
+              "    'wb_indicator_country_year_value'[indicator_id] = \"SP.POP.TOTL.FE.ZS\"",
+              ")"
+            ],
+            "lineageTag": "c5812d45-84fd-4f6d-891b-0abb633f6cde",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Female Labor Force Participation (% of total LF)",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    AVERAGE('wb_indicator_country_year_value'[value]),",
+              "    'wb_indicator_country_year_value'[indicator_id] = \"SL.TLF.CACT.FE.ZS\"",
+              ")"
+            ],
+            "lineageTag": "e557b2a2-95e0-46c6-a0f5-dfb3659a3ac0",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Labor Force Participation Rate, Total (%)",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    AVERAGE('wb_indicator_country_year_value'[value]),",
+              "    'wb_indicator_country_year_value'[indicator_id] = \"SL.TLF.CACT.ZS\"",
+              ")"
+            ],
+            "lineageTag": "e78dd5cd-5668-4f40-a5a6-1e258beb5a3a",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          }
+        ],
+        "annotations": [
+          {
+            "name": "PBI_Id",
+            "value": "ecae310a0d5b42a9bf420562aba202d3"
+          }
+        ]
+      },
+      {
+        "name": "Education Indicators",
+        "lineageTag": "715d7bc5-a7fc-4a63-81a7-ecfaebcb614a",
+        "columns": [
+          {
+            "type": "calculatedTableColumn",
+            "name": "Label",
+            "dataType": "string",
+            "isNameInferred": true,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[Label]",
+            "lineageTag": "0c1476af-9906-46ab-b70b-f1e3f6310afa",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "type": "calculatedTableColumn",
+            "name": "IndicatorID",
+            "dataType": "string",
+            "isNameInferred": true,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[IndicatorID]",
+            "lineageTag": "9364b957-cc5b-41e4-abfd-74ba4e9f2475",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "type": "calculatedTableColumn",
+            "name": "Agg",
+            "dataType": "string",
+            "isNameInferred": true,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[Agg]",
+            "lineageTag": "752eab3b-2894-485e-9b33-215c3dbfb1e2",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Education Indicators",
+            "mode": "import",
+            "source": {
+              "type": "calculated",
+              "expression": [
+                "",
+                "DATATABLE(",
+                "    \"Label\", STRING,",
+                "    \"IndicatorID\", STRING,",
+                "    \"Agg\", STRING, ",
+                "    {",
+                "        -- Literacy & enrolment (fill your exact codes for the TBD rows)",
+                "        {\"Literacy rate, adult (% ages 15+)\",                    \"SE.ADT.LITR.ZS\",           \"AVG\"},",
+                "        {\"Adult illiterate population (count)\",                  \"SE.ADT.ILIT.ZS\",  \"SUM\"},",
+                "        {\"Net enrolment rate, primary (%)\",                      \"UIS.NERT.1\",       \"AVG\"},",
+                "        {\"Net enrolment rate, lower secondary (%)\",                \"UIS.NERT.2\",     \"AVG\"},",
+                "        {\"Net enrolment rate, upper secondary (%)\",                \"UIS.NERT.3\",     \"AVG\"},",
+                "        ",
+                "        -- Spending & parity",
+                "        {\"Govt expenditure on education (% of govt exp.)\",      \"SE.XPD.TOTL.GB.ZS\",                  \"AVG\"},",
+                "        {\"Gross enrolment ratio, GPI\",                      \"UIS.GER.1T6.M\",                      \"AVG\"},",
+                "        {\"Female share of ICT graduates, tertiary (%)\",          \"UIS.FGP.5T8.F600\",                   \"AVG\"},",
+                "",
+                "        -- Outcomes & labor link",
+                "        {\"PISA: Mean science score\",                             \"LO.PISA.SCI\",                        \"AVG\"},",
+                "        {\"Female labor force (% total labor force)\",             \"SL.TLF.TOTL.FE.ZS\",                  \"AVG\"}",
+                "    }",
+                ")"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Selected Education Indicator ID",
+            "expression": [
+              "",
+              "SELECTEDVALUE('Education Indicators'[IndicatorID])"
+            ],
+            "lineageTag": "e537ad7e-8a8c-4be0-aadb-cb182205f057"
+          },
+          {
+            "name": "Selected Education Agg",
+            "expression": [
+              "",
+              "SELECTEDVALUE('Education Indicators'[Agg], \"AVG\")  -- default to AVG"
+            ],
+            "lineageTag": "aa55be33-7e2d-4716-96dd-ad81f61d6065"
+          },
+          {
+            "name": "Education Value",
+            "expression": [
+              "",
+              "VAR ind = [Selected Education Indicator ID]",
+              "VAR agg = [Selected Education Agg]",
+              "RETURN",
+              "SWITCH(",
+              "    TRUE(),",
+              "    ISBLANK(ind), BLANK(),",
+              "    agg = \"SUM\",",
+              "        CALCULATE(",
+              "            SUM('wb_indicator_country_year_value'[value]),",
+              "            'wb_indicator_country_year_value'[indicator_id] = ind",
+              "        ),",
+              "    -- else AVG",
+              "        CALCULATE(",
+              "            AVERAGE('wb_indicator_country_year_value'[value]),",
+              "            'wb_indicator_country_year_value'[indicator_id] = ind",
+              "        )",
+              ")"
+            ],
+            "lineageTag": "5ab08c1f-0fe3-4aba-8fa4-ae0a83a86ee0",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Education Title",
+            "expression": [
+              "",
+              "\"Education — \" &",
+              "SELECTEDVALUE('Education Indicators'[Label], \"Select indicator\") &",
+              "\" (\" & SELECTEDVALUE('year'[year], \"All years\") & \")\""
+            ],
+            "lineageTag": "ef75e615-7416-4589-849b-759384a255ed"
+          },
+          {
+            "name": "PISA Score",
+            "expression": [
+              "",
+              "CALCULATE(",
+              "    AVERAGE('wb_indicator_country_year_value'[value]),",
+              "    'wb_indicator_country_year_value'[indicator_id] = \"LO.PISA.SCI\"",
+              ")"
+            ],
+            "lineageTag": "1bf4f193-de72-4666-a1ab-bb48b7eb9e4c",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"isGeneralNumber\":true}"
+              }
+            ]
+          },
+          {
+            "name": "Top/Bottom 10 by PISA",
+            "expression": [
+              "",
+              "VAR rankTop = RANKX(ALLSELECTED('country_general_info'[country_name]), [PISA Score], , DESC, DENSE)",
+              "VAR rankBot = RANKX(ALLSELECTED('country_general_info'[country_name]), [PISA Score], , ASC,  DENSE)",
+              "VAR choice = SELECTEDVALUE('TopBottom Choice'[Choice], \"Top 10\")",
+              "RETURN IF( (choice=\"Top 10\" && rankTop<=10) || (choice=\"Bottom 10\" && rankBot<=10), 1, 0)"
+            ],
+            "formatString": "0",
+            "lineageTag": "586b0ef0-74ce-46c0-a852-44143e3d1edd"
+          }
+        ],
+        "annotations": [
+          {
+            "name": "PBI_Id",
+            "value": "d4cd375c7c7b48c1a33801bf5c2539a5"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "15de5c93-65ae-40ee-87c3-26022739bd15",
+        "fromTable": "wb_source",
+        "fromColumn": "last_updated",
+        "toTable": "LocalDateTable_975e0596-7eb4-4e36-a8a1-1797a3c3c926",
+        "toColumn": "Date",
+        "joinOnDateBehavior": "datePartOnly"
+      },
+      {
+        "name": "5d98eb10-c401-4167-bb26-e5f2b0cf6ff3",
+        "fromTable": "corruption_perception_index",
+        "fromColumn": "country_iso3code",
+        "toTable": "country_general_info",
+        "toColumn": "country_iso3code",
+        "annotations": [
+          {
+            "name": "PBI_IsFromSource",
+            "value": "FS"
+          }
+        ]
+      },
+      {
+        "name": "3e6ed76b-8df7-4feb-9003-8c44dfc89357",
+        "fromTable": "corruption_perception_index",
+        "fromColumn": "year",
+        "toTable": "year",
+        "toColumn": "year",
+        "annotations": [
+          {
+            "name": "PBI_IsFromSource",
+            "value": "FS"
+          }
+        ]
+      },
+      {
+        "name": "cc0fd471-91a9-438f-babb-cf2f9aa232ba",
+        "fromTable": "country_general_info",
+        "fromColumn": "region_id",
+        "toTable": "region",
+        "toColumn": "region_id",
+        "annotations": [
+          {
+            "name": "PBI_IsFromSource",
+            "value": "FS"
+          }
+        ]
+      },
+      {
+        "name": "9679cfbe-f3ec-44bb-a263-14ec254aa4ce",
+        "fromTable": "wb_indicator_country_year_value",
+        "fromColumn": "country_iso3code",
+        "toTable": "country_general_info",
+        "toColumn": "country_iso3code",
+        "annotations": [
+          {
+            "name": "PBI_IsFromSource",
+            "value": "FS"
+          }
+        ]
+      },
+      {
+        "name": "c59d67db-1fc0-4e4d-9ca4-a84ea3f54554",
+        "fromTable": "wb_indicator_country_year_value",
+        "fromColumn": "indicator_id",
+        "toTable": "wb_indicators",
+        "toColumn": "indicator_id",
+        "annotations": [
+          {
+            "name": "PBI_IsFromSource",
+            "value": "FS"
+          }
+        ]
+      },
+      {
+        "name": "2cabd6b4-1f4c-424e-be0f-df67aec7bda2",
+        "fromTable": "wb_indicator_country_year_value",
+        "fromColumn": "year",
+        "toTable": "year",
+        "toColumn": "year",
+        "annotations": [
+          {
+            "name": "PBI_IsFromSource",
+            "value": "FS"
+          }
+        ]
+      },
+      {
+        "name": "b1289f5c-57bb-4c7b-a0f9-46833c257f65",
+        "fromTable": "wb_indicator_topics",
+        "fromColumn": "indicator_id",
+        "toTable": "wb_indicators",
+        "toColumn": "indicator_id",
+        "annotations": [
+          {
+            "name": "PBI_IsFromSource",
+            "value": "FS"
+          }
+        ]
+      },
+      {
+        "name": "233ab596-ffe3-4344-b407-b94f56e613cf",
+        "fromTable": "wb_indicator_topics",
+        "fromColumn": "topic_id",
+        "toTable": "wb_topics",
+        "toColumn": "topic_id",
+        "annotations": [
+          {
+            "name": "PBI_IsFromSource",
+            "value": "FS"
+          }
+        ]
+      },
+      {
+        "name": "83d40c0a-b5ca-44de-94ff-8ad5e88218a9",
+        "fromTable": "wb_indicators",
+        "fromColumn": "source_id",
+        "toTable": "wb_source",
+        "toColumn": "source_id",
+        "annotations": [
+          {
+            "name": "PBI_IsFromSource",
+            "value": "FS"
+          }
+        ]
+      },
+      {
+        "name": "c0b977a0-b625-4394-b0d7-329d56ead8a2",
+        "fromTable": "world_happiness_report",
+        "fromColumn": "country_iso3code",
+        "toTable": "country_general_info",
+        "toColumn": "country_iso3code",
+        "annotations": [
+          {
+            "name": "PBI_IsFromSource",
+            "value": "FS"
+          }
+        ]
+      },
+      {
+        "name": "19d856f0-b020-4ec0-9efa-4f909a88ec92",
+        "fromTable": "world_happiness_report",
+        "fromColumn": "year",
+        "toTable": "year",
+        "toColumn": "year",
+        "annotations": [
+          {
+            "name": "PBI_IsFromSource",
+            "value": "FS"
+          }
+        ]
+      }
+    ],
+    "cultures": [
+      {
+        "name": "en-US",
+        "linguisticMetadata": {
+          "content": {
+            "Version": "1.0.0",
+            "Language": "en-US"
+          },
+          "contentType": "json"
+        }
+      }
+    ],
+    "annotations": [
+      {
+        "name": "__PBI_TimeIntelligenceEnabled",
+        "value": "1"
+      },
+      {
+        "name": "PBI_QueryOrder",
+        "value": "[\"v_cpi_latest\",\"v_cpi_with_region\",\"corruption_perception_index\",\"country_general_info\",\"region\",\"wb_indicator_country_year_value\",\"wb_indicator_topics\",\"wb_indicators\",\"wb_source\",\"wb_topics\",\"world_happiness_report\",\"year\"]"
+      },
+      {
+        "name": "__TEdtr",
+        "value": "1"
+      },
+      {
+        "name": "TabularEditor_SerializeOptions",
+        "value": "{\"IgnoreInferredObjects\":true,\"IgnoreInferredProperties\":true,\"IgnoreTimestamps\":true,\"SplitMultilineStrings\":true,\"PrefixFilenames\":false,\"LocalTranslations\":false,\"LocalPerspectives\":false,\"SortArrays\":false,\"LocalRelationships\":false,\"Levels\":[\"Data Sources\",\"Shared Expressions\",\"Perspectives\",\"Relationships\",\"Roles\",\"Tables\",\"Tables/Columns\",\"Tables/Hierarchies\",\"Tables/Measures\",\"Tables/Partitions\",\"Tables/Calculation Items\",\"Translations\"]}"
+      }
+    ]
+  }
+}
